@@ -1,3 +1,4 @@
+import asyncio
 import ccxt.async_support as ccxt
 import httpx
 from typing import Any
@@ -13,7 +14,11 @@ def _get_exchange(name: str):
     cls = getattr(ccxt, name, None)
     if cls is None:
         return None
-    return cls({"enableRateLimit": True, "options": {"defaultType": "spot"}})
+    return cls({
+        "enableRateLimit": True,
+        "timeout": 8000,  # 8s таймаут
+        "options": {"defaultType": "spot"},
+    })
 
 
 async def get_price(symbol: str = "BTC/USDT", exchange: str = "binance") -> dict[str, Any]:
@@ -83,16 +88,22 @@ async def get_top_crypto(limit: int = 10) -> list[dict[str, Any]]:
 
 async def compare_prices(symbol: str = "BTC/USDT") -> list[dict[str, Any]]:
     results = []
-    for name in ["binance", "coinbase", "kraken", "bybit"]:
-        ex = _get_exchange(name)
+    exchange_names = ["binance", "coinbase", "kraken", "bybit"]
+
+    async def fetch_one(name: str):
         try:
-            t = await ex.fetch_ticker(symbol)
+            ex = _get_exchange(name)
+            if ex is None:
+                return
+            t = await asyncio.wait_for(ex.fetch_ticker(symbol), timeout=10)
             if t and t.get("last"):
                 results.append({"exchange": name, "price": t["last"], "bid": t.get("bid"), "ask": t.get("ask")})
+            await ex.close()
         except Exception:
             pass
-        finally:
-            await ex.close()
+
+    tasks = [fetch_one(n) for n in exchange_names]
+    await asyncio.gather(*tasks, return_exceptions=True)
 
     if not results:
         return [{"error": f"No data for {symbol} on any exchange"}]
