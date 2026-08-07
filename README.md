@@ -2,7 +2,15 @@
 
 **AI-powered Crypto & DeFi intelligence — 14 tools for any AI agent.**
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![MCP](https://img.shields.io/badge/Protocol-MCP-8A2BE2.svg)](https://modelcontextprotocol.io)
+[![Open Source](https://img.shields.io/badge/Open%20Source-❤️-green.svg)](https://github.com/mrpkk/crypto-mcp-server)
+[![Telegram](https://img.shields.io/badge/Author-@mrpkk-26A5E4.svg)](https://t.me/mrpkk)
+
 Give Claude, Cursor, or any MCP-compatible agent real-time crypto superpowers: prices, yields, technical analysis, whale tracking, gas optimization, and AI-generated trading signals.
+
+> 🆓 **Free & Open Source (MIT)** — use it, fork it, build on it. Custom integrations & deployments: [@mrpkk](https://t.me/mrpkk).
 
 ## ✨ Why This Product?
 
@@ -47,7 +55,7 @@ Give Claude, Cursor, or any MCP-compatible agent real-time crypto superpowers: p
 
 ```bash
 # Install
-git clone https://github.com/yourusername/crypto-mcp-server.git
+git clone https://github.com/mrpkk/crypto-mcp-server.git
 cd crypto-mcp-server
 chmod +x install.sh && ./install.sh
 
@@ -142,6 +150,17 @@ python smart_contract/deploy.py --chain sepolia
 - [ ] Web dashboard
 - [ ] Strategy backtesting engine
 - [ ] Telegram bot integration
+
+---
+
+## 🤝 Contributing
+
+Found a bug? Want a new tool? Open an [issue](https://github.com/mrpkk/crypto-mcp-server/issues) or PR — contributions welcome.
+
+## 📬 Contact
+
+- Telegram: [@mrpkk](https://t.me/mrpkk)
+- Custom MCP servers, deployments, integrations: [@mrpkk](https://t.me/mrpkk)
 
 ---
 
