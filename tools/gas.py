@@ -1,6 +1,6 @@
-from typing import Any
-from datetime import datetime
 import random
+from datetime import datetime, timezone
+from typing import Any
 
 
 async def gas_tracker(chain: str = "ethereum") -> dict[str, Any]:
@@ -32,7 +32,7 @@ async def gas_tracker(chain: str = "ethereum") -> dict[str, Any]:
         "base_fee_gwei": round(base, 2),
         "priority_fee_gwei": round(priority, 2),
         "recommendation": "standard" if base < 30 else "slow",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 

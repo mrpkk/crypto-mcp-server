@@ -1,9 +1,8 @@
-from web3 import Web3
-from typing import Any
-from datetime import datetime
 import json
-from pathlib import Path
+from datetime import datetime, timezone
+from typing import Any
 
+from web3 import Web3
 
 CHAIN_RPCS = {
     "ethereum": "https://eth.llamarpc.com",
@@ -33,7 +32,7 @@ class Web3Client:
             "number": block["number"],
             "hash": block["hash"].hex(),
             "timestamp": block["timestamp"],
-            "datetime": datetime.fromtimestamp(block["timestamp"]).isoformat(),
+            "datetime": datetime.fromtimestamp(block["timestamp"], tz=timezone.utc).isoformat(),
             "transactions": len(block["transactions"]),
             "gas_used": block["gasUsed"],
             "gas_limit": block["gasLimit"],
@@ -45,7 +44,7 @@ class Web3Client:
         return {
             "gas_price_gwei": round(gwei, 2),
             "chain": self.chain,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def get_balance(self, address: str) -> dict[str, Any]:

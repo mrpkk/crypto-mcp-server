@@ -1,7 +1,7 @@
+from datetime import datetime, timezone
 from typing import Any
-from datetime import datetime
-import httpx
 
+import httpx
 
 DEFI_PROTOCOLS = [
     {"name": "Lido", "url": "https://api.lido.fi", "type": "liquid_staking"},
@@ -41,7 +41,7 @@ async def get_yields(min_apy: float = 0, chain: str = "all", max_results: int = 
                         "tvl_usd": round(tvl, 0),
                         "apy_base": round(pool.get("apyBase", 0), 2),
                         "apy_reward": round(pool.get("apyReward", 0), 2),
-                        "updated": datetime.fromtimestamp(pool.get("tvlUsd", 0)).isoformat(),
+                        "updated": datetime.now(timezone.utc).isoformat(),
                     })
     except Exception:
         all_opportunities = FALLBACK_YIELDS

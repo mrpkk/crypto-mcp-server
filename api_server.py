@@ -3,23 +3,23 @@
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent))
 
-from fastapi import FastAPI, HTTPException
+
+import uvicorn
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
-from typing import Optional
-import uvicorn
 
-from tools.price import get_price, get_top_crypto, compare_prices
-from tools.yield_tools import get_yields, get_protocol_info
-from tools.signal import technical_indicators
-from tools.analysis import analyze_token, portfolio_health
-from tools.gas import gas_tracker, estimate_tx_cost
-from tools.whales import track_whale, whale_alerts
 from ai.analyst import CryptoAnalyst
 from config import settings
+from tools.analysis import analyze_token, portfolio_health
+from tools.gas import estimate_tx_cost, gas_tracker
+from tools.price import compare_prices, get_price, get_top_crypto
+from tools.signal import technical_indicators
+from tools.whales import track_whale, whale_alerts
+from tools.yield_tools import get_yields
 
 analyst = CryptoAnalyst(api_key=settings.github_token)
 analyst.fallback_key = settings.mistral_api_key
@@ -303,8 +303,9 @@ async def api_yields(min_apy: float = 0, chain: str = "all", max_results: int = 
 
 
 @app.get("/technical/{symbol:path}")
-async def api_technical(symbol: str = "BTC/USDT", price: float = 0):
-    return await technical_indicators(symbol=symbol, price=price)
+async def api_technical(symbol: str = "BTC/USDT", price: float = 0,
+                        exchange: str = "binance"):
+    return await technical_indicators(symbol=symbol, price=price, exchange=exchange)
 
 
 @app.get("/analyze/{symbol}")
@@ -338,7 +339,7 @@ async def api_sentiment(symbol: str = "BTC", price_change_24h: float = 0, volume
     try:
         return await analyst.market_sentiment(symbol=symbol, price_change_24h=price_change_24h, volume_usd=volume_usd)
     except Exception as e:
-        return {"symbol": symbol, "sentiment": "neutral", "score": 50, "reason": f"AI unavailable: {str(e)}", "fallback": True}
+        return {"symbol": symbol, "sentiment": "neutral", "score": 50, "reason": f"AI unavailable: {e!s}", "fallback": True}
 
 
 @app.get("/signal/{symbol:path}")
@@ -346,7 +347,7 @@ async def api_signal(symbol: str = "BTC/USDT", price: float = 0, rsi: float = 50
     try:
         return await analyst.trading_signal(symbol=symbol, price=price, rsi=rsi, macd=macd, volume_trend=volume_trend)
     except Exception as e:
-        return {"symbol": symbol, "signal": "hold", "confidence": 0, "reason": f"AI unavailable: {str(e)}", "fallback": True}
+        return {"symbol": symbol, "signal": "hold", "confidence": 0, "reason": f"AI unavailable: {e!s}", "fallback": True}
 
 
 @app.get("/whales")

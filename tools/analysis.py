@@ -1,5 +1,4 @@
 from typing import Any
-from datetime import datetime
 
 
 async def analyze_token(
@@ -110,7 +109,7 @@ def _risk_factors(symbol: str, score: int) -> list[str]:
     if symbol.upper() not in ("BTC", "ETH"):
         factors.append("Lower market cap")
     if score > 70:
-        factors.append(f"Top 10 crypto by market cap")
+        factors.append("Top 10 crypto by market cap")
     return factors if factors else ["Standard market risks"]
 
 def _category(symbol: str) -> str:

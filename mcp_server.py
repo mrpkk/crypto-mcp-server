@@ -1,19 +1,18 @@
-from mcp.server import Server, NotificationOptions
-from mcp.server.models import InitializationOptions
-from mcp.types import Tool, TextContent, ImageContent, EmbeddedResource
-from typing import Any
 import asyncio
 import json
+from typing import Any
 
-from config import settings
+from mcp.server import Server
+from mcp.types import EmbeddedResource, ImageContent, TextContent, Tool
+
 from ai.analyst import CryptoAnalyst
-from chain.client import get_client
-from tools.price import get_price, get_top_crypto, compare_prices
-from tools.yield_tools import get_yields, get_protocol_info
-from tools.signal import technical_indicators
+from config import settings
 from tools.analysis import analyze_token, portfolio_health
-from tools.gas import gas_tracker, estimate_tx_cost
+from tools.gas import estimate_tx_cost, gas_tracker
+from tools.price import compare_prices, get_price, get_top_crypto
+from tools.signal import technical_indicators
 from tools.whales import track_whale, whale_alerts
+from tools.yield_tools import get_yields
 
 analyst = CryptoAnalyst(api_key=settings.github_token)
 analyst.fallback_key = settings.mistral_api_key
@@ -75,6 +74,7 @@ async def handle_list_tools() -> list[Tool]:
                 "properties": {
                     "symbol": {"type": "string", "description": "Trading pair", "default": "BTC/USDT"},
                     "price": {"type": "number", "description": "Current price (optional)", "default": 0},
+                    "exchange": {"type": "string", "description": "Exchange for OHLCV data (binance, coinbase, kraken)", "default": "binance"},
                 },
             },
         ),
@@ -223,6 +223,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any] | None) -> list[
         "technical_analysis": lambda: technical_indicators(
             symbol=args.get("symbol", "BTC/USDT"),
             price=float(args.get("price", 0)),
+            exchange=args.get("exchange", "binance"),
         ),
         "analyze_token": lambda: analyze_token(
             symbol=args.get("symbol", "BTC"),

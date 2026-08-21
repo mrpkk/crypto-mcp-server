@@ -1,9 +1,12 @@
 import asyncio
+import logging
+from datetime import datetime, timezone
+from typing import Any
+
 import ccxt.async_support as ccxt
 import httpx
-from typing import Any
-from datetime import datetime
 
+logger = logging.getLogger(__name__)
 
 EXCHANGE_NAMES = ["binance", "coinbase", "kraken", "bybit"]
 
@@ -25,7 +28,7 @@ async def get_price(symbol: str = "BTC/USDT", exchange: str = "binance") -> dict
     if exchange not in EXCHANGE_NAMES:
         return {"error": f"Unsupported exchange: {exchange}. Use: {', '.join(EXCHANGE_NAMES)}"}
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     cache_key = f"{exchange}:{symbol}"
 
     if cache_key in FETCH_CACHE:
@@ -50,7 +53,7 @@ async def get_price(symbol: str = "BTC/USDT", exchange: str = "binance") -> dict
                 "volume_24h_usd": ticker.get("quoteVolume"),
                 "bid": ticker.get("bid"),
                 "ask": ticker.get("ask"),
-                "timestamp": datetime.fromtimestamp(ticker["timestamp"] / 1000).isoformat() if ticker.get("timestamp") else now.isoformat(),
+                "timestamp": datetime.fromtimestamp(ticker["timestamp"] / 1000, tz=timezone.utc).isoformat() if ticker.get("timestamp") else now.isoformat(),
             }
             FETCH_CACHE[cache_key] = (now.timestamp(), result)
             return result
@@ -69,7 +72,7 @@ async def get_top_crypto(limit: int = 10) -> list[dict[str, Any]]:
                 params={"vs_currency": "usd", "order": "volume_desc", "per_page": limit, "sparkline": "false"},
             )
             if resp.status_code != 200:
-                raise Exception(f"CoinGecko returned {resp.status_code}")
+                raise RuntimeError(f"CoinGecko returned {resp.status_code}")
             data = resp.json()
             return [
                 {
@@ -99,8 +102,8 @@ async def compare_prices(symbol: str = "BTC/USDT") -> list[dict[str, Any]]:
             if t and t.get("last"):
                 results.append({"exchange": name, "price": t["last"], "bid": t.get("bid"), "ask": t.get("ask")})
             await ex.close()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("ticker fetch failed for %s: %s", name, e)
 
     tasks = [fetch_one(n) for n in exchange_names]
     await asyncio.gather(*tasks, return_exceptions=True)

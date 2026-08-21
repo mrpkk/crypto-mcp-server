@@ -1,6 +1,4 @@
 from typing import Any
-from datetime import datetime, timedelta
-
 
 WHALE_WALLETS = [
     {"address": "0x...000000000000000000000000000000000000dead", "label": "Burn Address", "balance_eth": 0},
@@ -38,7 +36,7 @@ async def whale_alerts(min_value_usd: float = 1_000_000, timeframe_hours: int = 
             "time": "2 hours ago",
             "type": "exchange_inflow",
             "exchange": "Binance",
-            "significance": "high" if 15_000_000 >= 10_000_000 else "medium",
+            "significance": "high",
         },
         {
             "tx_hash": "0xdef...456",

@@ -1,7 +1,7 @@
-import httpx
+from datetime import datetime, timezone
 from typing import Any
-from datetime import datetime
 
+import httpx
 
 PROVIDERS = [
     {"name": "GitHub Models", "url": "https://models.inference.ai.azure.com/chat/completions", "model": "gpt-4o"},
@@ -64,7 +64,7 @@ class CryptoAnalyst:
 
 Provide: sentiment (bullish/bearish/neutral: 0-100), key levels, short outlook."""
         text = await self.analyze(system, prompt)
-        return {"symbol": symbol, "analysis": text, "timestamp": datetime.utcnow().isoformat()}
+        return {"symbol": symbol, "analysis": text, "timestamp": datetime.now(timezone.utc).isoformat()}
 
     async def yield_assessment(self, protocol: str, apy: float, tvl: float, risk_factors: list[str]) -> dict[str, Any]:
         system = "You are a DeFi yield analyst. Assess yield opportunities and risks."
@@ -75,7 +75,7 @@ Provide: sentiment (bullish/bearish/neutral: 0-100), key levels, short outlook."
 
 Score 1-10 and provide recommendation."""
         text = await self.analyze(system, prompt)
-        return {"protocol": protocol, "apy": apy, "assessment": text, "timestamp": datetime.utcnow().isoformat()}
+        return {"protocol": protocol, "apy": apy, "assessment": text, "timestamp": datetime.now(timezone.utc).isoformat()}
 
     async def trading_signal(self, symbol: str, price: float, rsi: float, macd: str, volume_trend: str, news: list[str]) -> dict[str, Any]:
         system = "You are a crypto trading analyst. Generate concise trading signals based on technical analysis."
@@ -88,4 +88,4 @@ Score 1-10 and provide recommendation."""
 
 Provide: action (buy/sell/hold), confidence (0-100), reasoning, stop-loss, take-profit."""
         text = await self.analyze(system, prompt)
-        return {"symbol": symbol, "price": price, "signal": text, "timestamp": datetime.utcnow().isoformat()}
+        return {"symbol": symbol, "price": price, "signal": text, "timestamp": datetime.now(timezone.utc).isoformat()}
