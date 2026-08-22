@@ -12,7 +12,7 @@
 | ID | Тулза | Категория | As-is | To-be |
 |---|---|---|---|---|
 | FR-1 | get_price (Binance/Coinbase/Kraken) | Market | ✅ | ✅ + fallback источников |
-| FR-2 | compare_prices (арбитраж) | Market | ✅ | ✅ тесты на моках бирж |
+| FR-2 | compare_prices (арбитраж) | Market | ✅ | ✅ моки в tests/ (21.08) |
 | FR-3 | get_top_crypto | Market | ✅ | ✅ |
 | FR-4 | get_yields (100+ протоколов) | DeFi | ✅ | ✅ |
 | FR-5 | yield_assessment (AI-оценка риска) | DeFi | ✅ | ✅ |
@@ -24,9 +24,9 @@
 | ID | Требование | As-is | To-be |
 |---|---|---|---|
 | NFR-1 | Лицензия MIT, бейджи, install.sh | ✅ эталон | ✅ поддерживать |
-| NFR-2 | Тесты | ❌/🟡 | pytest на моках бирж + контрактные тесты схем ответов |
+| NFR-2 | Тесты | ✅ 13 passed (21.08): golden TA, контракты 14 тулзов, моки |
 | NFR-3 | Rate-limit обработка биржевых API | 🟡 | ✅ backoff+кеширование |
-| NFR-4 | CI | ❌ | Actions: lint+test+publish PyPI/Docker |
+| NFR-4 | CI | 🟡 Actions lint+test работают (21.08); publish — следующий шаг |
 | NFR-5 | Наблюдаемость для хостеров | 🟡 | healthcheck endpoint, структурированные логи |
 
 ## 4. Разрывы до коммерческого продукта

@@ -1,0 +1,36 @@
+name: Release
+on:
+  push:
+    tags: ["v*"]
+jobs:
+  pypi:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # trusted publishing (PyPI)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install build
+      - name: Tests перед публикацией
+        run: |
+          pip install -r requirements.txt -r requirements-dev.txt
+          pytest tests/ -q
+      - name: Build
+        run: python -m build
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  docker:
+    runs-on: ubuntu-latest
+    permissions: { packages: write }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ghcr.io/${{ github.repository }}:${{ github.ref_name }}, ghcr.io/${{ github.repository }}:latest

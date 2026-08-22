@@ -1,3 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "crypto-mcp-server"
+version = "0.1.0"
+description = "AI-powered Crypto & DeFi intelligence — 14 tools for any MCP-compatible AI agent (Claude, Cursor)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "mrpkk" }]
+keywords = ["mcp", "crypto", "defi", "ai-agents", "trading", "model-context-protocol"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Office/Business :: Financial :: Investment",
+]
+dependencies = [
+    "ccxt>=4.0",
+    "httpx>=0.25",
+    "mcp>=1.0",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.4"]
+
+[project.urls]
+Homepage = "https://github.com/mrpkk/crypto-mcp-server"
+
+[project.scripts]
+crypto-mcp-server = "mcp_server:main"
+
+[tool.setuptools]
+packages = ["tools", "ai", "chain"]
+py-modules = ["mcp_server", "api_server", "config", "main"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
