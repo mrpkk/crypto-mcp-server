@@ -15,7 +15,11 @@ class Settings(BaseSettings):
     default_chain: str = "ethereum"
     supported_chains: list[str] = ["ethereum", "bsc", "polygon", "arbitrum", "optimism", "base"]
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {
+        "env_file": (".env", str(Path.home() / ".env")),
+        "env_file_encoding": "utf-8",
+        "extra": "ignore",
+    }
 
 
 settings = Settings()
