@@ -5,19 +5,19 @@
 > Статус-легенда: `[ ]` todo · `[~]` in progress · `[x]` done (hash) · `[!]` blocked (причина).
 
 ## Текущий фокус
-S1 — Audit (следующий шаг: `docs/AUDIT_REPORT.md`)
+S2 — Data Reality (следующий шаг: `tools/gas.py` — реальный gas через Web3Client)
 
 ---
 
 ## S1 — AUDIT (W1)
-- [ ] 01. Ветка + PROGRESS.md
-- [ ] 02. `docs/AUDIT_REPORT.md` — Actual vs Claimed по 14 tools (каждая строка с file:line)
-  - [ ] 2.1 Таблица реальности: 14 инструментов (claimed/actual/status/priority)
-  - [ ] 2.2 Dead code: `chain/client.py`, `db_path`, неиспользуемые env-ключи
-  - [ ] 2.3 Mocks/hardcode: конкретные file:line (`random.uniform`, цены 2024, whale-заглушки)
-  - [ ] 2.4 Security findings: CORS-дубли, версии, отсутствие health/rate-limit/дисклеймера
-  - [ ] 2.5 MCP schema problems: описания, defaults, error contract
-  - [ ] 2.6 Priority matrix P0–P3 + план исправления
+- [x] 01. Ветка + PROGRESS.md (255e271)
+- [x] 02. `docs/AUDIT_REPORT.md` — Actual vs Claimed по 14 tools (каждая строка с file:line) (f7313b8)
+  - [x] 2.1 Таблица реальности: 14 инструментов (claimed/actual/status/priority)
+  - [x] 2.2 Dead code: `chain/client.py`, `db_path`, неиспользуемые env-ключи
+  - [x] 2.3 Mocks/hardcode: конкретные file:line (`random.uniform`, цены 2024, whale-заглушки)
+  - [x] 2.4 Security findings: CORS-дубли, версии, отсутствие health/rate-limit/дисклеймера
+  - [x] 2.5 MCP schema problems: описания, defaults, error contract
+  - [x] 2.6 Priority matrix P0–P3 + план исправления
 
 ## S2 — DATA REALITY (W1–2, P0)
 - [ ] 03. `tools/gas.py` → реальный gas через Web3Client (6 сетей, кэш 15с, EIP-1559, fallback RPC)
@@ -83,4 +83,5 @@ S1 — Audit (следующий шаг: `docs/AUDIT_REPORT.md`)
 ## Журнал слайсов (append-only)
 | # | Дата | Слайс | Коммит | Тест | Примечание |
 |---|---|---|---|---|---|
-| 01 | 2026-09-15 | Ветка + PROGRESS.md | (текущий) | baseline 13 passed | Старт v2 |
+| 01 | 2026-09-15 | Ветка + PROGRESS.md | 255e271 | baseline 13 passed | Старт v2 |
+| 02 | 2026-09-15 | AUDIT_REPORT.md (14 tools, file:line) | f7313b8 | — | 4 мока + 2 хардкод подтверждены |
