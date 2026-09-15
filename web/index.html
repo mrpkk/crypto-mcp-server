@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ChainSight — crypto intelligence for AI agents and humans. Real data, honest sources.">
+  <title>ChainSight — Market Pulse</title>
+  <link rel="stylesheet" href="/static/tokens.css">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Навигация">
+      <div class="brand"><span class="brand-dot"></span><span>ChainSight</span></div>
+      <button class="nav-item active" data-section="command">📡 Command Center</button>
+      <button class="nav-item" data-section="markets">📈 Markets</button>
+      <button class="nav-item" data-section="onchain">⛓ On-chain</button>
+      <button class="nav-item" data-section="defi">🌾 DeFi</button>
+      <button class="nav-item" data-section="api">🔌 API / MCP</button>
+      <button class="nav-item" data-section="settings">⚙️ Settings</button>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1>Market Pulse</h1>
+          <div class="small muted" id="pulse-updated">загрузка…</div>
+        </div>
+        <div class="topbar-meta">
+          <span class="badge badge-demo hidden" id="demo-badge"><span class="dot"></span>DEMO</span>
+          <span id="version-label" class="mono">v—</span>
+          <button class="btn btn-ghost" id="theme-toggle" title="Сменить тему">◐</button>
+          <button class="btn btn-primary" id="refresh-btn">Обновить</button>
+        </div>
+      </div>
+
+      <section class="onboarding" id="onboarding">
+        <div>
+          <strong>Подключите ChainSight к вашему AI-агенту или изучите живые данные</strong>
+          <p>14 инструментов: цены, арбитраж, DeFi-доходности, газ, киты, TA и AI-интерпретация.
+             Анонимный доступ — free tier (100 запросов/час). DEMO-режим явно помечается бейджем.</p>
+        </div>
+        <div class="onboarding-actions">
+          <button class="btn" id="demo-toggle">Explore live data</button>
+          <button class="btn btn-ghost" id="onboarding-close" aria-label="Скрыть">✕</button>
+        </div>
+      </section>
+
+      <section aria-labelledby="pulse-title">
+        <h2 id="pulse-title" class="hidden">Market Pulse</h2>
+        <div class="grid grid-4" id="pulse-cards">
+          <div class="card" data-metric="BTC"><div class="skeleton" style="height:64px"></div></div>
+          <div class="card" data-metric="ETH"><div class="skeleton" style="height:64px"></div></div>
+          <div class="card" data-metric="SOL"><div class="skeleton" style="height:64px"></div></div>
+          <div class="card" data-metric="GAS"><div class="skeleton" style="height:64px"></div></div>
+        </div>
+      </section>
+
+      <section style="margin-top: var(--space-6)">
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Top movers</h2>
+              <span class="badge badge-cached" id="top-badge"><span class="dot"></span>—</span>
+            </div>
+            <div id="top-table"><div class="skeleton" style="height:120px"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">DeFi yields (≥5% APY)</h2>
+              <span class="badge badge-cached" id="yields-badge"><span class="dot"></span>—</span>
+            </div>
+            <div id="yields-table"><div class="skeleton" style="height:120px"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section style="margin-top: var(--space-6)">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Whale watch</h2>
+            <span class="badge badge-cached" id="whales-badge"><span class="dot"></span>—</span>
+          </div>
+          <div id="whales-table"><div class="skeleton" style="height:80px"></div></div>
+          <p class="small muted" style="margin-top:8px">Free-tier Etherscan: последние транзакции по watchlist-адресам (WHALE_WATCHLIST в ~/.env).</p>
+        </div>
+      </section>
+
+      <p class="footer-note">Данные предоставляются «как есть», не являются финансовой рекомендацией.
+        Источник каждой метрики указан в её карточке. <a href="/docs" style="color:var(--primary)">API docs</a> ·
+        <a href="/capabilities" style="color:var(--primary)">capabilities</a></p>
+    </main>
+  </div>
+
+  <div class="toast-host" id="toast-host" aria-live="polite"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
