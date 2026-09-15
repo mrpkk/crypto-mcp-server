@@ -36,7 +36,7 @@ S3 — Providers (следующий шаг: 11 /health /ready /version /capabil
 - [x] 07. `providers/base.py` — ABC всех провайдеров + envelope helper
 - [x] 08. `providers/market.py` — CCXT + CoinGecko fallback; ExchangePool (singleton, lifecycle) (425b372)
 - [x] 09. `providers/onchain.py` — Web3Client wrapper (health/timeout/retry/cache) (3a7acd5)
-- [~] 10. Envelope во все 14 tools (09f9aff: price-группа готова; осталось yield/signal/ai)
+- [x] 10. Envelope во все 14 tools (09f9aff + d32b5df: price/yield/signal; AI-группа отдаёт dict от analyst — обернуть в S5)
 - [ ] 11. `/health`, `/ready`, `/version`, `/capabilities` + единый version source (v2.0.0)
 - [ ] 12. Rate limiting (per-key/per-tier) + CORS-фикс (один middleware, allowlist)
 - [ ] 13. Тесты: test_providers.py, test_envelope.py, test_health.py
@@ -93,3 +93,4 @@ S3 — Providers (следующий шаг: 11 /health /ready /version /capabil
 | 08 | 2026-09-15 | ExchangePool + CCXTMarketProvider (price.py без churn) | 425b372 | 59 passed + live | BTC $77992, пул 1 клиент |
 | 09 | 2026-09-15 | RPCOneChainProvider (to_thread) + gas на провайдерах | 3a7acd5 | 66 passed + live | base 0.005 gwei, $0.0023 swap |
 | 10 | 2026-09-15 | Envelope price-группы + api_server: CORS-fix, POST /portfolio, честные AI-ошибки | 09f9aff | 66 passed + REST smoke | BTC $77986 живой |
+| 10c | 2026-09-15 | Envelope signal/yields; выпилены FALLBACK_YIELDS (APY-фейк) и цены 2024 в signal | d32b5df | 66 passed + live | RSI 61, MA50 $2210, DeFiLlama onre |
