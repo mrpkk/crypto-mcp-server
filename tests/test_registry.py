@@ -34,12 +34,12 @@ def test_tool_registry_complete():
     if m is None:
         return  # static check already passed
     import asyncio
-    tools = asyncio.run(m.handle_list_tools())
+    tools = asyncio.run(m.mcp.list_tools())
     names = {t.name for t in tools}
     missing = EXPECTED_TOOLS - names
     assert not missing, f"registry missing: {missing}"
     for t in tools:
-        assert t.inputSchema.get("type") == "object"
+        assert t.input_schema.get("type") == "object"
         assert isinstance(t.description, str) and len(t.description) > 10
 
 
@@ -48,7 +48,7 @@ def test_schemas_are_valid_json_schema():
     if m is None:
         return
     import asyncio
-    tools = asyncio.run(m.handle_list_tools())
+    tools = asyncio.run(m.mcp.list_tools())
     for t in tools:
-        s = json.dumps(t.inputSchema)
+        s = json.dumps(t.input_schema)
         assert '"type"' in s and '"properties"' in s

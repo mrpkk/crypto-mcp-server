@@ -1,12 +1,20 @@
+"""Crypto MCP Server — 14 tools for any MCP-compatible AI agent (mcp>=2.0 API).
+
+All tools return canonical envelopes (data + meta) serialized as JSON text,
+or honest error contracts. No fabricated data anywhere in the tool chain.
+"""
+from __future__ import annotations
+
 import asyncio
 import json
+import logging
 from typing import Any
 
-from mcp.server import Server
-from mcp.types import EmbeddedResource, ImageContent, TextContent, Tool
+from mcp.server.mcpserver import MCPServer
 
 from ai.analyst import CryptoAnalyst
 from config import settings
+from providers.base import make_error
 from tools.analysis import analyze_token, portfolio_health
 from tools.gas import estimate_tx_cost, gas_tracker
 from tools.price import compare_prices, get_price, get_top_crypto
@@ -14,266 +22,107 @@ from tools.signal import technical_indicators
 from tools.whales import track_whale, whale_alerts
 from tools.yield_tools import get_yields
 
+logger = logging.getLogger(__name__)
+
 analyst = CryptoAnalyst(api_key=settings.github_token)
 analyst.fallback_key = settings.mistral_api_key
 
-server = Server("crypto-mcp")
+mcp = MCPServer("crypto-mcp", version="2.0.0")
 
 
-@server.list_tools()
-async def handle_list_tools() -> list[Tool]:
-    return [
-        Tool(
-            name="get_price",
-            description="Get real-time cryptocurrency price from major exchanges",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "symbol": {"type": "string", "description": "Trading pair (e.g. BTC/USDT, ETH/USDT)", "default": "BTC/USDT"},
-                    "exchange": {"type": "string", "description": "Exchange (binance, coinbase, kraken)", "default": "binance"},
-                },
-            },
-        ),
-        Tool(
-            name="compare_prices",
-            description="Compare prices across multiple exchanges to find arbitrage opportunities",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "symbol": {"type": "string", "description": "Trading pair to compare", "default": "BTC/USDT"},
-                },
-            },
-        ),
-        Tool(
-            name="get_top_crypto",
-            description="Get top cryptocurrencies by volume",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "limit": {"type": "number", "description": "Number of results", "default": 10},
-                },
-            },
-        ),
-        Tool(
-            name="get_yields",
-            description="Find best DeFi yield opportunities across protocols and chains",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "min_apy": {"type": "number", "description": "Minimum APY filter", "default": 0},
-                    "chain": {"type": "string", "description": "Filter by chain (ethereum, bsc, polygon, arbitrum, or 'all')", "default": "all"},
-                    "max_results": {"type": "number", "description": "Max results", "default": 20},
-                },
-            },
-        ),
-        Tool(
-            name="technical_analysis",
-            description="Get technical indicators (RSI, MACD, MA) for a trading pair",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "symbol": {"type": "string", "description": "Trading pair", "default": "BTC/USDT"},
-                    "price": {"type": "number", "description": "Current price (optional)", "default": 0},
-                    "exchange": {"type": "string", "description": "Exchange for OHLCV data (binance, coinbase, kraken)", "default": "binance"},
-                },
-            },
-        ),
-        Tool(
-            name="analyze_token",
-            description="Deep token analysis with risk assessment and market positioning",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "symbol": {"type": "string", "description": "Token symbol (e.g. BTC, ETH, SOL)", "default": "BTC"},
-                    "price_usd": {"type": "number", "description": "Current price (optional)", "default": 0},
-                    "market_cap": {"type": "number", "description": "Market cap (optional)", "default": 0},
-                },
-            },
-        ),
-        Tool(
-            name="portfolio_health",
-            description="Analyze portfolio health, diversity, and get allocation suggestions",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "holdings": {
-                        "type": "array",
-                        "description": "List of holdings with symbol and value_usd",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "symbol": {"type": "string"},
-                                "value_usd": {"type": "number"},
-                            },
-                        },
-                    },
-                },
-            },
-        ),
-        Tool(
-            name="gas_tracker",
-            description="Get current gas prices for any EVM chain with recommendations",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "chain": {"type": "string", "description": "Chain name (ethereum, bsc, polygon, arbitrum, optimism, base)", "default": "ethereum"},
-                },
-            },
-        ),
-        Tool(
-            name="estimate_tx_cost",
-            description="Estimate transaction cost in USD for different operation types",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "chain": {"type": "string", "description": "Chain name", "default": "ethereum"},
-                    "gas_units": {"type": "number", "description": "Gas units for the transaction", "default": 21000},
-                    "speed": {"type": "string", "description": "Speed (slow, standard, fast, urgent)", "default": "standard"},
-                },
-            },
-        ),
-        Tool(
-            name="market_sentiment",
-            description="AI-powered market sentiment analysis with Mistral AI",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "symbol": {"type": "string", "description": "Token symbol", "default": "BTC"},
-                    "price_change_24h": {"type": "number", "description": "24h price change percent", "default": 0},
-                    "volume_usd": {"type": "number", "description": "24h volume in USD", "default": 0},
-                },
-            },
-        ),
-        Tool(
-            name="yield_assessment",
-            description="AI-powered DeFi yield opportunity assessment",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "protocol": {"type": "string", "description": "Protocol name"},
-                    "apy": {"type": "number", "description": "APY percentage"},
-                    "tvl": {"type": "number", "description": "Total Value Locked in USD"},
-                    "risk_factors": {"type": "array", "items": {"type": "string"}, "description": "Risk factors"},
-                },
-            },
-        ),
-        Tool(
-            name="trading_signal",
-            description="AI-generated trading signal with technical + sentiment analysis",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "symbol": {"type": "string", "description": "Trading pair", "default": "BTC/USDT"},
-                    "price": {"type": "number", "description": "Current price", "default": 0},
-                    "rsi": {"type": "number", "description": "RSI value", "default": 50},
-                    "macd": {"type": "string", "description": "MACD status", "default": "neutral"},
-                    "volume_trend": {"type": "string", "description": "Volume trend", "default": "stable"},
-                    "news": {"type": "array", "items": {"type": "string"}, "description": "Recent news headlines"},
-                },
-            },
-        ),
-        Tool(
-            name="track_whale",
-            description="Track a whale wallet's holdings and recent activity",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "address": {"type": "string", "description": "Wallet address (optional)"},
-                },
-            },
-        ),
-        Tool(
-            name="whale_alerts",
-            description="Get recent large transactions and whale movements",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "min_value_usd": {"type": "number", "description": "Minimum transaction value in USD", "default": 1_000_000},
-                    "timeframe_hours": {"type": "number", "description": "Lookback period in hours", "default": 24},
-                },
-            },
-        ),
-    ]
+def _dumps(payload: Any) -> str:
+    return json.dumps(payload, indent=2, default=str)
 
 
-async def _safe_call(func, *args, **kwargs) -> str:
+async def _safe(coro) -> str:
     try:
-        result = await func(*args, **kwargs)
-        return json.dumps(result, indent=2, default=str)
-    except Exception as e:
-        return json.dumps({"error": str(e)}, indent=2)
+        return _dumps(await coro)
+    except Exception as exc:  # never leak raw exceptions to agents
+        logger.exception("tool call failed")
+        return _dumps(make_error("INTERNAL", str(exc), "Check the input parameters and retry"))
 
 
-@server.call_tool()
-async def handle_call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextContent | ImageContent | EmbeddedResource]:
-    args = arguments or {}
-
-    handlers = {
-        "get_price": lambda: get_price(
-            symbol=args.get("symbol", "BTC/USDT"),
-            exchange=args.get("exchange", "binance"),
-        ),
-        "compare_prices": lambda: compare_prices(symbol=args.get("symbol", "BTC/USDT")),
-        "get_top_crypto": lambda: get_top_crypto(limit=int(args.get("limit", 10))),
-        "get_yields": lambda: get_yields(
-            min_apy=float(args.get("min_apy", 0)),
-            chain=args.get("chain", "all"),
-            max_results=int(args.get("max_results", 20)),
-        ),
-        "technical_analysis": lambda: technical_indicators(
-            symbol=args.get("symbol", "BTC/USDT"),
-            price=float(args.get("price", 0)),
-            exchange=args.get("exchange", "binance"),
-        ),
-        "analyze_token": lambda: analyze_token(
-            symbol=args.get("symbol", "BTC"),
-            price_usd=float(args.get("price_usd", 0)),
-            market_cap=float(args.get("market_cap", 0)),
-        ),
-        "portfolio_health": lambda: portfolio_health(holdings=args.get("holdings", [])),
-        "gas_tracker": lambda: gas_tracker(chain=args.get("chain", "ethereum")),
-        "estimate_tx_cost": lambda: estimate_tx_cost(
-            chain=args.get("chain", "ethereum"),
-            gas_units=int(args.get("gas_units", 21000)),
-            speed=args.get("speed", "standard"),
-        ),
-        "market_sentiment": lambda: analyst.market_sentiment(
-            symbol=args.get("symbol", "BTC"),
-            price_change_24h=float(args.get("price_change_24h", 0)),
-            volume_usd=float(args.get("volume_usd", 0)),
-        ),
-        "yield_assessment": lambda: analyst.yield_assessment(
-            protocol=args.get("protocol", "unknown"),
-            apy=float(args.get("apy", 0)),
-            tvl=float(args.get("tvl", 0)),
-            risk_factors=args.get("risk_factors", []),
-        ),
-        "trading_signal": lambda: analyst.trading_signal(
-            symbol=args.get("symbol", "BTC/USDT"),
-            price=float(args.get("price", 0)),
-            rsi=float(args.get("rsi", 50)),
-            macd=args.get("macd", "neutral"),
-            volume_trend=args.get("volume_trend", "stable"),
-            news=args.get("news", []),
-        ),
-        "track_whale": lambda: track_whale(address=args.get("address", "")),
-        "whale_alerts": lambda: whale_alerts(
-            min_value_usd=float(args.get("min_value_usd", 1_000_000)),
-            timeframe_hours=int(args.get("timeframe_hours", 24)),
-        ),
-    }
-
-    handler = handlers.get(name)
-    if not handler:
-        return [TextContent(type="text", text=f"Unknown tool: {name}")]
-
-    text = await _safe_call(handler)
-    return [TextContent(type="text", text=text)]
+@mcp.tool(name="get_price", description="Get the latest price for a crypto pair on an exchange (CCXT).")
+async def tool_get_price(symbol: str = "BTC/USDT", exchange: str = "binance") -> str:
+    return await _safe(get_price(symbol=symbol, exchange=exchange))
 
 
-async def main():
-    async with server.run_stdio() as running:
-        await running.stopped
+@mcp.tool(name="compare_prices", description="Compare a pair across exchanges and compute the arbitrage spread.")
+async def tool_compare_prices(symbol: str = "BTC/USDT") -> str:
+    return await _safe(compare_prices(symbol=symbol))
+
+
+@mcp.tool(name="get_top_crypto", description="Top cryptocurrencies by 24h volume with price, change and market cap.")
+async def tool_get_top_crypto(limit: int = 10) -> str:
+    return await _safe(get_top_crypto(limit=limit))
+
+
+@mcp.tool(name="get_yields", description="DeFi yield pools from DeFi Llama filtered by chain and minimum APY.")
+async def tool_get_yields(min_apy: float = 0, chain: str = "all", max_results: int = 20) -> str:
+    return await _safe(get_yields(min_apy=min_apy, chain=chain, max_results=max_results))
+
+
+@mcp.tool(name="technical_analysis", description="Technical indicators (RSI-14 Wilder, MACD, MA50/200, support/resistance) from real OHLCV.")
+async def tool_technical_analysis(symbol: str = "BTC/USDT", price: float = 0, exchange: str = "binance") -> str:
+    return await _safe(technical_indicators(symbol=symbol, price=price, exchange=exchange))
+
+
+@mcp.tool(name="analyze_token", description="Token fundamentals with live price; metrics you did not provide are returned as null with warnings.")
+async def tool_analyze_token(symbol: str = "BTC", price_usd: float = 0, market_cap: float = 0) -> str:
+    return await _safe(analyze_token(symbol=symbol, price_usd=price_usd, market_cap=market_cap))
+
+
+@mcp.tool(name="portfolio_health", description="Portfolio concentration/diversification from real holdings: [{symbol, amount} or {symbol, value_usd}].")
+async def tool_portfolio_health(holdings: list[dict[str, Any]] | None = None) -> str:
+    return await _safe(portfolio_health(holdings=holdings or []))
+
+
+@mcp.tool(name="gas_tracker", description="Live gas prices for 6 EVM chains (Ethereum, BSC, Polygon, Arbitrum, Optimism, Base) with USD cost estimates.")
+async def tool_gas_tracker(chain: str = "ethereum") -> str:
+    return await _safe(gas_tracker(chain=chain))
+
+
+@mcp.tool(name="estimate_tx_cost", description="Estimate transaction cost in native token and USD for a gas amount and speed.")
+async def tool_estimate_tx_cost(chain: str = "ethereum", gas_units: int = 21000, speed: str = "standard") -> str:
+    return await _safe(estimate_tx_cost(chain=chain, gas_units=gas_units, speed=speed))
+
+
+@mcp.tool(name="market_sentiment", description="AI interpretation of market sentiment from the provided real inputs (LLM interpretation, not data).")
+async def tool_market_sentiment(symbol: str = "BTC", price_change_24h: float = 0, volume_usd: float = 0) -> str:
+    return await _safe(analyst.market_sentiment(symbol=symbol, price_change_24h=price_change_24h, volume_usd=volume_usd))
+
+
+@mcp.tool(name="yield_assessment", description="AI assessment of a DeFi pool's risk/reward given protocol, APY, TVL and risk factors.")
+async def tool_yield_assessment(protocol: str = "unknown", apy: float = 0, tvl: float = 0, risk_factors: list[str] | None = None) -> str:
+    return await _safe(analyst.yield_assessment(protocol=protocol, apy=apy, tvl=tvl, risk_factors=risk_factors or []))
+
+
+@mcp.tool(name="trading_signal", description="AI trading signal interpretation from indicators you provide (LLM interpretation, not financial advice).")
+async def tool_trading_signal(symbol: str = "BTC/USDT", price: float = 0, rsi: float = 50, macd: str = "neutral", volume_trend: str = "stable") -> str:
+    return await _safe(
+        analyst.trading_signal(symbol=symbol, price=price, rsi=rsi, macd=macd, volume_trend=volume_trend)
+    )
+
+
+@mcp.tool(name="track_whale", description="Recent large transfers for an EVM address via Etherscan V2 (free tier: latest transactions only).")
+async def tool_track_whale(address: str, chain: str = "ethereum", min_value_usd: float = 100000, limit: int = 25) -> str:
+    return await _safe(track_whale(address=address, chain=chain, min_value_usd=min_value_usd, limit=limit))
+
+
+@mcp.tool(name="whale_alerts", description="Large transfers across watchlist addresses (set WHALE_WATCHLIST in ~/.env or pass addresses).")
+async def tool_whale_alerts(
+    min_value_usd: float = 1000000,
+    timeframe_hours: int = 24,
+    addresses: list[str] | None = None,
+    chain: str = "ethereum",
+) -> str:
+    return await _safe(
+        whale_alerts(min_value_usd=min_value_usd, timeframe_hours=timeframe_hours, addresses=addresses, chain=chain)
+    )
+
+
+async def main() -> None:
+    await mcp.run_stdio_async()
 
 
 if __name__ == "__main__":

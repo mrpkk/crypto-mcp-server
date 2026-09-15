@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """Crypto MCP Server — REST API wrapper with Swagger UI."""
 
+import logging
 import os
 import sys
+from datetime import datetime, timezone
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as pkg_version
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -24,6 +28,26 @@ from tools.signal import technical_indicators
 from tools.whales import track_whale, whale_alerts
 from tools.yield_tools import get_yields
 
+
+def _read_version() -> str:
+    """Single source of truth: pyproject.toml (fallback: installed metadata)."""
+    try:
+        import tomllib
+
+        pyproject = Path(__file__).parent / "pyproject.toml"
+        if pyproject.exists():
+            with pyproject.open("rb") as fh:
+                return tomllib.load(fh)["project"]["version"]
+    except Exception as exc:
+        logging.getLogger(__name__).debug("pyproject version read failed: %s", exc)
+    try:
+        return pkg_version("crypto-mcp-server")
+    except PackageNotFoundError:
+        return "unknown"
+
+
+APP_VERSION = _read_version()
+
 analyst = CryptoAnalyst(api_key=settings.github_token)
 analyst.fallback_key = settings.mistral_api_key
 
@@ -42,7 +66,7 @@ app = FastAPI(
         "• 🔍 Глубокий анализ токенов\n\n"
         "🔌 REST API + MCP Protocol + Swagger UI"
     ),
-    version="1.4.0",
+    version=APP_VERSION,
 )
 _cors_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()]
 app.add_middleware(
@@ -114,7 +138,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <div class="hero">
   <h1>Crypto & DeFi Intelligence</h1>
   <p>14 real-time tools for prices, yields, technical analysis, whales, gas, and AI market insights.</p>
-  <div class="badge">v1.3.0 · REST API + MCP Server</div>
+  <div class="badge">v2.0.0 · REST API + MCP Server</div>
 </div>
 
 <div class="section-title">📦 What You Get</div>
@@ -280,6 +304,66 @@ init();
 @app.get("/", response_class=HTMLResponse)
 async def root():
     return DASHBOARD_HTML
+
+
+
+
+@app.get("/health")
+async def health():
+    """Liveness probe: process is up."""
+    return {"status": "ok", "version": APP_VERSION, "timestamp": datetime.now(timezone.utc).isoformat()}
+
+
+async def _collect_provider_health() -> dict:
+    from providers.market import CCXTMarketProvider
+    from providers.onchain import RPCOneChainProvider
+
+    checks: dict = {}
+    try:
+        checks["market"] = await CCXTMarketProvider().health()
+    except Exception as exc:
+        checks["market"] = {"provider": "ccxt", "status": "down", "error": str(exc)}
+    try:
+        checks["onchain"] = await RPCOneChainProvider().health()
+    except Exception as exc:
+        checks["onchain"] = {"provider": "web3", "status": "down", "error": str(exc)}
+    llm_configured = bool(analyst.api_key or analyst.fallback_key)
+    checks["llm"] = {"provider": "github_models+mistral", "status": "ok" if llm_configured else "degraded"}
+    return checks
+
+
+@app.get("/ready")
+async def ready():
+    """Readiness probe: critical dependencies reachable (degraded allowed)."""
+    from fastapi.responses import JSONResponse
+
+    checks = await _collect_provider_health()
+    all_ok = all(check.get("status") in ("ok", "degraded") for check in checks.values())
+    payload = {
+        "status": "ready" if all_ok else "not_ready",
+        "checks": checks,
+        "version": APP_VERSION,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    return JSONResponse(payload, status_code=200 if all_ok else 503)
+
+
+@app.get("/version")
+async def version():
+    return {"version": APP_VERSION, "api": "v2", "mcp": "mcp>=1.0"}
+
+
+@app.get("/capabilities")
+async def capabilities():
+    from mcp_server import mcp
+
+    tools = await mcp.list_tools()
+    return {
+        "version": APP_VERSION,
+        "tools": [{"name": t.name, "description": t.description} for t in tools],
+        "tool_count": len(tools),
+        "providers": await _collect_provider_health(),
+    }
 
 
 @app.get("/price/compare/{symbol:path}")

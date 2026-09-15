@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "crypto-mcp-server"
-version = "0.1.0"
+version = "2.0.0"
 description = "AI-powered Crypto & DeFi intelligence — 14 tools for any MCP-compatible AI agent (Claude, Cursor)"
 readme = "README.md"
 requires-python = ">=3.10"
