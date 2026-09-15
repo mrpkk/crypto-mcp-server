@@ -68,9 +68,10 @@
     return `$${Number(value).toFixed(4)}`;
   }
 
-  function metricCard(title, valueText, delta, envelope) {
+  function metricCard(title, valueText, delta, envelope, symbol) {
     const card = document.createElement("div");
     card.className = "card";
+    if (symbol) card.dataset.symbol = symbol;
     const header = document.createElement("div");
     header.className = "card-header";
     const h = document.createElement("h3");
@@ -119,16 +120,16 @@
     results.forEach((r, i) => {
       if (r.status === "fulfilled") {
         const env = r.value;
-        host.appendChild(metricCard(symbols[i], fmtUsd(env.data.price_usd), env.data.change_24h, env));
+        host.appendChild(metricCard(symbols[i], fmtUsd(env.data.price_usd), env.data.change_24h, env, symbols[i]));
       } else {
-        host.appendChild(metricCard(symbols[i], "—", null, { error: r.reason.contract || { code: "ERR" } }));
+        host.appendChild(metricCard(symbols[i], "—", null, { error: r.reason.contract || { code: "ERR" } }, symbols[i]));
       }
     });
 
     try {
       const gas = await api("/gas/ethereum");
       const gwei = gas.data.gas_price_gwei;
-      const card = metricCard("ETH gas", `${gwei} gwei`, null, gas);
+      const card = metricCard("ETH gas", `${gwei} gwei`, null, gas, "GAS");
       if (gas.data.native_price_usd) {
         const cost = document.createElement("div");
         cost.className = "small muted";
@@ -137,7 +138,7 @@
       }
       host.appendChild(card);
     } catch (e) {
-      host.appendChild(metricCard("ETH gas", "—", null, { error: e.contract || { code: "ERR" } }));
+      host.appendChild(metricCard("ETH gas", "—", null, { error: e.contract || { code: "ERR" } }, "GAS"));
     }
     $("pulse-updated").textContent = `обновлено ${new Date().toLocaleTimeString()}`;
   }
@@ -255,8 +256,161 @@
     } catch { /* non-critical */ }
   }
 
+
+  async function renderWatchlist() {
+    const host = $("watchlist-items");
+    try {
+      const list = await api("/watchlist");
+      $("watchlist-count").textContent = String(list.items.length);
+      if (!list.items.length) {
+        host.textContent = "Пока пусто — добавьте актив, кошелёк или протокол.";
+        return;
+      }
+      host.replaceChildren();
+      list.items.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "row spread";
+        const label = document.createElement("span");
+        label.textContent = `[${item.kind}] ${item.value}${item.label ? " — " + item.label : ""}`;
+        const del = document.createElement("button");
+        del.className = "btn btn-ghost small";
+        del.textContent = "✕";
+        del.addEventListener("click", async () => {
+          await fetch(`/watchlist/${item.id}`, { method: "DELETE" });
+          renderWatchlist();
+        });
+        row.append(label, del);
+        host.appendChild(row);
+      });
+    } catch (e) {
+      host.replaceChildren(errorBox(e));
+    }
+  }
+
+  async function addWatchlistItem() {
+    const kind = $("wl-kind").value;
+    const value = $("wl-value").value.trim();
+    if (!value) return;
+    try {
+      await fetch("/watchlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind, value }),
+      }).then(async (r) => { if (!r.ok) throw new Error((await r.json()).error?.message || "add failed"); });
+      $("wl-value").value = "";
+      renderWatchlist();
+    } catch (e) {
+      toast(e.message, "error");
+    }
+  }
+
+  async function renderRules() {
+    const host = $("alert-rules");
+    try {
+      const data = await api("/alerts");
+      if (!data.rules.length) {
+        host.textContent = "Правил нет.";
+        return;
+      }
+      host.replaceChildren();
+      data.rules.forEach((rule) => {
+        const row = document.createElement("div");
+        row.className = "row spread";
+        const label = document.createElement("span");
+        label.textContent = `#${rule.id} ${rule.kind} ${JSON.stringify(rule.params)}`;
+        const del = document.createElement("button");
+        del.className = "btn btn-ghost small";
+        del.textContent = "✕";
+        del.addEventListener("click", async () => {
+          await fetch(`/alerts/${rule.id}`, { method: "DELETE" });
+          renderRules();
+        });
+        row.append(label, del);
+        host.appendChild(row);
+      });
+    } catch (e) {
+      host.replaceChildren(errorBox(e));
+    }
+  }
+
+  async function addRule() {
+    const kind = $("rule-kind").value;
+    const symbol = $("rule-symbol").value.trim() || "BTC";
+    const threshold = Number($("rule-threshold").value || 5);
+    let params = {};
+    if (kind === "price_move") params = { symbol, threshold_pct: threshold };
+    if (kind === "gas_below") params = { chain: "ethereum", gwei_below: threshold };
+    if (kind === "whale_above") params = { min_usd: threshold * 1_000_000 };
+    try {
+      const response = await fetch("/alerts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind, params }),
+      });
+      if (!response.ok) throw new Error((await response.json()).error?.message || "add failed");
+      renderRules();
+      toast("Правило добавлено", "success");
+    } catch (e) {
+      toast(e.message, "error");
+    }
+  }
+
+  async function checkAlerts() {
+    const host = $("alert-fires");
+    host.replaceChildren(Object.assign(document.createElement("div"), { className: "skeleton", textContent: "" }));
+    try {
+      const env = await api("/alerts/check");
+      host.replaceChildren();
+      if (!env.data.alerts.length) {
+        const none = document.createElement("p");
+        none.className = "small muted";
+        none.textContent = "Сработок нет (или правила не заданы).";
+        host.appendChild(none);
+        return;
+      }
+      env.data.alerts.forEach((fired) => {
+        const box = document.createElement("div");
+        box.className = "card";
+        const title = document.createElement("div");
+        title.textContent = fired.message;
+        const why = document.createElement("div");
+        why.className = "small muted";
+        why.textContent = `Почему важно: ${fired.why_it_matters} · источник: ${fired.source}`;
+        box.append(title, why);
+        host.appendChild(box);
+      });
+    } catch (e) {
+      host.replaceChildren(errorBox(e));
+    }
+  }
+
+  function connectStream() {
+    if (!window.EventSource) return;
+    const stream = new EventSource("/stream/prices");
+    stream.addEventListener("price", (event) => {
+      try {
+        const env = JSON.parse(event.data);
+        if (!env.data || !env.data.symbol) return;
+        const base = env.data.symbol.split("/")[0];
+        const card = document.querySelector(`[data-symbol="${base}"]`);
+        if (!card) return;
+        const metric = card.querySelector(".metric");
+        if (metric) metric.textContent = fmtUsd(env.data.price_usd);
+        const delta = card.querySelector(".metric-delta");
+        if (delta && env.data.change_24h !== null && env.data.change_24h !== undefined) {
+          delta.textContent = `${Number(env.data.change_24h) >= 0 ? "+" : ""}${Number(env.data.change_24h).toFixed(2)}% (24h)`;
+          delta.className = `metric-delta ${Number(env.data.change_24h) >= 0 ? "up" : "down"}`;
+        }
+      } catch { /* ignore malformed chunk */ }
+    });
+    stream.onerror = () => { /* EventSource переподключается сам */ };
+  }
+
   function wireUi() {
     $("refresh-btn").addEventListener("click", () => refreshAll());
+    $("wl-add").addEventListener("click", addWatchlistItem);
+    $("rule-add").addEventListener("click", addRule);
+    $("alerts-check").addEventListener("click", checkAlerts);
     $("theme-toggle").addEventListener("click", () => {
       const root = document.documentElement;
       const next = root.dataset.theme === "light" ? "dark" : "light";
@@ -289,5 +443,8 @@
   wireUi();
   loadVersion();
   refreshAll();
-  setInterval(renderPulse, 30000);
+  renderWatchlist();
+  renderRules();
+  connectStream();
+  setInterval(renderPulse, 60000);
 })();

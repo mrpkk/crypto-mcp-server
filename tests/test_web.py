@@ -26,7 +26,8 @@ def test_dashboard_has_onboarding_and_demo(client):
     body = client.get("/").text
     assert "Explore live data" in body
     assert "demo-badge" in body
-    assert "Connect MCP" not in body  # текст онбординга на русском, кнопка Explore live data
+    assert "Watchlist" in body
+    assert "Smart alerts" in body
 
 
 def test_tokens_css_served(client):
@@ -48,3 +49,5 @@ def test_app_js_served(client):
     assert response.status_code == 200
     assert "qualityBadge" in response.text
     assert "renderPulse" in response.text
+    assert "connectStream" in response.text
+    assert "renderWatchlist" in response.text

@@ -76,6 +76,46 @@
       </section>
 
       <section style="margin-top: var(--space-6)">
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Watchlist</h2>
+              <span class="badge badge-cached" id="watchlist-count">0</span>
+            </div>
+            <div id="watchlist-items" class="stack small muted">Пока пусто — добавьте актив, кошелёк или протокол.</div>
+            <div class="row" style="margin-top: var(--space-3)">
+              <select class="btn" id="wl-kind" aria-label="Тип">
+                <option value="asset">asset</option>
+                <option value="wallet">wallet</option>
+                <option value="protocol">protocol</option>
+              </select>
+              <input class="btn" id="wl-value" placeholder="BTC / 0x… / aave" aria-label="Значение" style="flex:1">
+              <button class="btn btn-primary" id="wl-add">Добавить</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Smart alerts</h2>
+              <button class="btn" id="alerts-check">Проверить сейчас</button>
+            </div>
+            <div id="alert-rules" class="stack small muted">Правил нет.</div>
+            <div class="row" style="margin-top: var(--space-3)">
+              <select class="btn" id="rule-kind" aria-label="Тип правила">
+                <option value="price_move">price_move</option>
+                <option value="gas_below">gas_below</option>
+                <option value="whale_above">whale_above</option>
+              </select>
+              <input class="btn" id="rule-symbol" placeholder="BTC" aria-label="Символ" style="width:72px">
+              <input class="btn" id="rule-threshold" placeholder="порог" aria-label="Порог" style="width:80px">
+              <button class="btn btn-primary" id="rule-add">Добавить</button>
+            </div>
+            <div id="alert-fires" style="margin-top: var(--space-3)"></div>
+          </div>
+        </div>
+      </section>
+
+      <section style="margin-top: var(--space-6)">
         <div class="card">
           <div class="card-header">
             <h2 class="card-title">Whale watch</h2>

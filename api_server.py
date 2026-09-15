@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Crypto MCP Server — REST API wrapper with Swagger UI."""
 
+import asyncio
+import json
 import logging
 import os
 import sys
@@ -22,6 +24,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from ai.analyst import CryptoAnalyst
+from alerts import evaluate_rules
 from auth.keys import APIKeyStore
 from config import settings
 from observability import configure_json_logging, metrics
@@ -33,6 +36,7 @@ from tools.price import compare_prices, get_price, get_top_crypto
 from tools.signal import technical_indicators
 from tools.whales import track_whale, whale_alerts
 from tools.yield_tools import get_yields
+from watchlists import WatchlistStore
 
 
 def _read_version() -> str:
@@ -89,6 +93,7 @@ app.mount("/static", StaticFiles(directory=str(WEB_DIR)), name="static")
 
 rate_limiter = RateLimiter()
 api_key_store = APIKeyStore(settings.db_path)
+watchlist_store = WatchlistStore(settings.db_path)
 
 
 @app.middleware("http")
@@ -150,6 +155,83 @@ async def root():
     return FileResponse(WEB_DIR / "index.html")
 
 
+
+
+
+class WatchlistItemIn(BaseModel):
+    kind: str
+    value: str
+    label: str = ""
+
+
+class AlertRuleIn(BaseModel):
+    kind: str
+    params: dict
+
+
+@app.get("/watchlist")
+async def watchlist_list():
+    return {"items": watchlist_store.list()}
+
+
+@app.post("/watchlist", status_code=201)
+async def watchlist_add(item: WatchlistItemIn):
+    try:
+        item_id = watchlist_store.add(item.kind, item.value, item.label)
+    except ValueError as exc:
+        return make_error("BAD_KIND", str(exc), "kind must be asset|wallet|protocol")
+    return {"id": item_id}
+
+
+@app.delete("/watchlist/{item_id}", status_code=204)
+async def watchlist_remove(item_id: int):
+    if not watchlist_store.remove(item_id):
+        return make_error("NOT_FOUND", f"watchlist item {item_id} not found", "List items via GET /watchlist")
+    return None
+
+
+@app.get("/alerts")
+async def alerts_list():
+    return {"rules": watchlist_store.list_rules()}
+
+
+@app.post("/alerts", status_code=201)
+async def alerts_add(rule: AlertRuleIn):
+    try:
+        rule_id = watchlist_store.add_rule(rule.kind, rule.params)
+    except ValueError as exc:
+        return make_error("BAD_KIND", str(exc), "kind must be price_move|gas_below|whale_above")
+    return {"id": rule_id}
+
+
+@app.delete("/alerts/{rule_id}", status_code=204)
+async def alerts_remove(rule_id: int):
+    if not watchlist_store.remove_rule(rule_id):
+        return make_error("NOT_FOUND", f"rule {rule_id} not found", "List rules via GET /alerts")
+    return None
+
+
+@app.post("/alerts/check")
+async def alerts_check():
+    """Evaluate enabled rules against LIVE tools. Every alert explains WHY IT MATTERS."""
+    return await evaluate_rules(watchlist_store.list_rules())
+
+
+@app.get("/stream/prices")
+async def stream_prices(symbols: str = "BTC/USDT,ETH/USDT,SOL/USDT", interval: float = 15, once: int = 0):
+    """Server-Sent Events stream of live prices. `once=1` returns a single batch (for tests/scripts)."""
+    from fastapi.responses import StreamingResponse
+
+    async def generator():
+        while True:
+            for symbol in [s.strip() for s in symbols.split(",") if s.strip()]:
+                envelope = await get_price(symbol=symbol)
+                yield f"event: price\ndata: {json.dumps(envelope, default=str)}\n\n"
+            if once:
+                break
+            await asyncio.sleep(interval)
+
+    return StreamingResponse(generator(), media_type="text/event-stream")
 
 
 @app.get("/metrics", response_class=PlainTextResponse)
