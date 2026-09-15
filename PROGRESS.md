@@ -5,7 +5,7 @@
 > Статус-легенда: `[ ]` todo · `[~]` in progress · `[x]` done (hash) · `[!]` blocked (причина).
 
 ## Текущий фокус
-S5 — MCP & AI (следующий шаг: 19 MCP tool contracts)
+S6 — Design & Web (следующий шаг: 26 DESIGN_SYSTEM.md + токены)
 
 ---
 
@@ -49,13 +49,13 @@ S5 — MCP & AI (следующий шаг: 19 MCP tool contracts)
 - [x] 18. Тесты: test_auth.py, test_api_keys_integration.py, test_security.py (6088c28)
 
 ## S5 — MCP & AI (W6, P1)
-- [ ] 19. `docs/MCP_TOOL_CONTRACTS.md` — все tools по шаблону (PURPOSE≠INPUT/OUTPUT/SOURCE/FRESHNESS/COST/RATE/FAILURE/EXAMPLE)
-- [ ] 20. Error contract `{error:{code,message,retryable,suggested_action}}` во всех tools
-- [ ] 21. LLMProvider abstraction (primary/fallback/disabled, circuit breaker, timeout, retry)
-- [ ] 22. Structured outputs (Pydantic) + confidence/assumptions/data_timestamp/sources
-- [ ] 23. `docs/LLM_PROVIDER_BENCHMARK.md` (веса 20/20/20/15/10/10/5; GigaChat — после проверки лицензии, STOP-10)
-- [ ] 24. `docs/MCP_VERSION_STRATEGY.md` (MCP 2026-07-28: stateless core, cache hints, Tasks, Apps)
-- [ ] 25. Тесты: test_llm_structured.py, test_error_contract.py
+- [x] 19. `docs/MCP_TOOL_CONTRACTS.md` (145aa0c: 14 tools) — все tools по шаблону (PURPOSE≠INPUT/OUTPUT/SOURCE/FRESHNESS/COST/RATE/FAILURE/EXAMPLE)
+- [x] 20. Error contract (145aa0c: единый make_error во всех tools) `{error:{code,message,retryable,suggested_action}}` во всех tools
+- [x] 21. LLMProvider abstraction (145aa0c: ai/llm.py, circuit breaker) (primary/fallback/disabled, circuit breaker, timeout, retry)
+- [x] 22. Structured outputs (145aa0c: Pydantic, repair-once) (Pydantic) + confidence/assumptions/data_timestamp/sources
+- [x] 23. `docs/LLM_PROVIDER_BENCHMARK.md` (145aa0c) (веса 20/20/20/15/10/10/5; GigaChat — после проверки лицензии, STOP-10)
+- [x] 24. `docs/MCP_VERSION_STRATEGY.md` (145aa0c: mcp 2.0 уже внедрён) (MCP 2026-07-28: stateless core, cache hints, Tasks, Apps)
+- [x] 25. Тесты: test_llm_structured.py (15 тестов) (145aa0c)
 
 ## S6 — DESIGN & WEB (W7–8, P1)
 - [ ] 26. `DESIGN_SYSTEM.md` + токены (TypeScript/CSS) — quiet confidence
@@ -98,3 +98,4 @@ S5 — MCP & AI (следующий шаг: 19 MCP tool contracts)
 | 12-13 | 2026-09-15 | Rate limiter (429, per-key/tier) + health tests | 5190d24 | 80 passed | S3 закрыт |
 | 14-15 | 2026-09-15 | RBAC + SQLite API-ключи (cms_, SHA-256, метеринг) + REST-интеграция | 0a54053 + 6088c28 | 98→106 passed | 401/ревокация работают |
 | 16-18 | 2026-09-15 | Observability (JSON-логи, /metrics, X-Request-ID) + SECURITY.md (T1–T8) + дисклеймер | 6088c28 | 106 passed | S4 закрыт |
+| 19-25 | 2026-09-15 | LLM-цепочка (breaker) + structured outputs + контракты/бенчмарк/MCP-стратегия | 145aa0c | 121 passed + live GigaChat | S5 закрыт: sentiment bullish 60 |
