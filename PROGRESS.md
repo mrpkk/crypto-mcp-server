@@ -5,7 +5,7 @@
 > Статус-легенда: `[ ]` todo · `[~]` in progress · `[x]` done (hash) · `[!]` blocked (причина).
 
 ## Текущий фокус
-S4 — Security (следующий шаг: 14 auth/rbac.py + API-ключи)
+S5 — MCP & AI (следующий шаг: 19 MCP tool contracts)
 
 ---
 
@@ -42,11 +42,11 @@ S4 — Security (следующий шаг: 14 auth/rbac.py + API-ключи)
 - [x] 13. Тесты: test_providers.py, test_envelope.py, test_health.py (5190d24)
 
 ## S4 — SECURITY (W5, P1)
-- [ ] 14. RBAC per-tool (free/pro/enterprise) + `auth/rbac.py`
-- [ ] 15. API-ключи (`cms_` prefix, хеширование, ротация) + usage metering in-house
-- [ ] 16. Observability: structured JSON logs + request_id + `observability/metrics.py` (prometheus-client)
-- [ ] 17. `docs/SECURITY.md` — threat model T1–T5 (secrets/SSRF/injection/rate/poisoning)
-- [ ] 18. Тесты: test_rbac.py, test_api_keys.py, test_no_secrets_in_logs.py
+- [x] 14. RBAC per-tool (free/pro/enterprise) + `auth/rbac.py` (0a54053)
+- [x] 15. API-ключи (`cms_` prefix, хеширование, ротация) + usage metering in-house (0a54053)
+- [x] 16. Observability: structured JSON logs + request_id + метрики + /metrics (6088c28)
+- [x] 17. `docs/SECURITY.md` — threat model T1–T8 (6088c28)
+- [x] 18. Тесты: test_auth.py, test_api_keys_integration.py, test_security.py (6088c28)
 
 ## S5 — MCP & AI (W6, P1)
 - [ ] 19. `docs/MCP_TOOL_CONTRACTS.md` — все tools по шаблону (PURPOSE≠INPUT/OUTPUT/SOURCE/FRESHNESS/COST/RATE/FAILURE/EXAMPLE)
@@ -96,3 +96,5 @@ S4 — Security (следующий шаг: 14 auth/rbac.py + API-ключи)
 | 10c | 2026-09-15 | Envelope signal/yields; выпилены FALLBACK_YIELDS (APY-фейк) и цены 2024 в signal | d32b5df | 66 passed + live | RSI 61, MA50 $2210, DeFiLlama onre |
 | 11 | 2026-09-15 | Health/version + ФИКС MCP 2.0 (сервер не запускался!) | 65b6866 | 66 passed + MCP smoke | /capabilities: 14 tools |
 | 12-13 | 2026-09-15 | Rate limiter (429, per-key/tier) + health tests | 5190d24 | 80 passed | S3 закрыт |
+| 14-15 | 2026-09-15 | RBAC + SQLite API-ключи (cms_, SHA-256, метеринг) + REST-интеграция | 0a54053 + 6088c28 | 98→106 passed | 401/ревокация работают |
+| 16-18 | 2026-09-15 | Observability (JSON-логи, /metrics, X-Request-ID) + SECURITY.md (T1–T8) + дисклеймер | 6088c28 | 106 passed | S4 закрыт |
