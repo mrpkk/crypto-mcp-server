@@ -28,11 +28,13 @@ async def test_get_price_happy_path(monkeypatch):
 
     monkeypatch.setattr("tools.price._get_exchange", lambda name: FakeEx())
     out = await get_price("BTC/USDT", "binance")
+    assert set(out) == {"data", "meta"}
     for key in ["symbol", "exchange", "price_usd", "change_24h", "high_24h",
                 "low_24h", "volume_24h_usd", "bid", "ask", "timestamp"]:
-        assert key in out, f"missing contract key: {key}"
-    assert out["price_usd"] == 65000.0
-    assert isinstance(out["timestamp"], str)
+        assert key in out["data"], f"missing contract key: {key}"
+    assert out["data"]["price_usd"] == 65000.0
+    assert out["meta"]["source"] == "ccxt:binance"
+    assert isinstance(out["data"]["timestamp"], str)
 
 
 @pytest.mark.asyncio

@@ -31,8 +31,8 @@ async def _fetch_price(symbol: str) -> float | None:
         from tools.price import get_price
 
         result = await get_price(f"{symbol.upper()}/USDT")
-        if isinstance(result, dict) and result.get("price_usd"):
-            return float(result["price_usd"])
+        if isinstance(result, dict) and result.get("data", {}).get("price_usd"):
+            return float(result["data"]["price_usd"])
     except Exception:
         return None
     return None

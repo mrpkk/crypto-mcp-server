@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Crypto MCP Server — REST API wrapper with Swagger UI."""
 
+import os
 import sys
 from pathlib import Path
 
@@ -11,9 +12,11 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
 
 from ai.analyst import CryptoAnalyst
 from config import settings
+from providers.base import make_error
 from tools.analysis import analyze_token, portfolio_health
 from tools.gas import estimate_tx_cost, gas_tracker
 from tools.price import compare_prices, get_price, get_top_crypto
@@ -41,8 +44,14 @@ app = FastAPI(
     ),
     version="1.4.0",
 )
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+_cors_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization"],
+)
 
 
 DASHBOARD_HTML = """<!DOCTYPE html>
@@ -281,14 +290,13 @@ async def api_compare_prices(symbol: str = "BTC/USDT"):
 @app.get("/price/{symbol:path}")
 async def api_get_price(symbol: str = "BTC/USDT", exchange: str = "binance"):
     result = await get_price(symbol=symbol, exchange=exchange)
-    # Добавляем алиасы для совместимости с дашбордом
-    if isinstance(result, dict):
-        if "price_usd" in result and "price" not in result:
-            result["price"] = result["price_usd"]
-        if "volume_24h_usd" in result and "volume_24h" not in result:
-            result["volume_24h"] = result["volume_24h_usd"]
-        if "market_cap" not in result and "market_cap_usd" in result:
-            result["market_cap"] = result["market_cap_usd"]
+    # Алиасы для дашборда — внутри envelope.data
+    data = result.get("data") if isinstance(result, dict) else None
+    if isinstance(data, dict):
+        if "price_usd" in data and "price" not in data:
+            data["price"] = data["price_usd"]
+        if "volume_24h_usd" in data and "volume_24h" not in data:
+            data["volume_24h"] = data["volume_24h_usd"]
     return result
 
 
@@ -313,15 +321,25 @@ async def api_analyze(symbol: str = "BTC", price_usd: float = 0, market_cap: flo
     return await analyze_token(symbol=symbol, price_usd=price_usd, market_cap=market_cap)
 
 
+class Holding(BaseModel):
+    symbol: str
+    amount: float | None = None
+    value_usd: float | None = None
+
+
+@app.post("/portfolio")
+async def api_portfolio(holdings: list[Holding]):
+    """Portfolio health from real user holdings: [{symbol, amount} or {symbol, value_usd}]."""
+    return await portfolio_health(holdings=[h.model_dump(exclude_none=True) for h in holdings])
+
+
 @app.get("/portfolio")
-async def api_portfolio():
-    dummy = [
-        {"symbol": "BTC", "value_usd": 50000},
-        {"symbol": "ETH", "value_usd": 30000},
-        {"symbol": "SOL", "value_usd": 10000},
-        {"symbol": "USDC", "value_usd": 10000},
-    ]
-    return await portfolio_health(holdings=dummy)
+async def api_portfolio_get():
+    return make_error(
+        "METHOD_NOT_ALLOWED",
+        "Portfolio requires real holdings input",
+        "Use POST /portfolio with body: [{\"symbol\":\"ETH\",\"amount\":1}]",
+    )
 
 
 @app.get("/gas/{chain}")
@@ -339,7 +357,7 @@ async def api_sentiment(symbol: str = "BTC", price_change_24h: float = 0, volume
     try:
         return await analyst.market_sentiment(symbol=symbol, price_change_24h=price_change_24h, volume_usd=volume_usd)
     except Exception as e:
-        return {"symbol": symbol, "sentiment": "neutral", "score": 50, "reason": f"AI unavailable: {e!s}", "fallback": True}
+        return make_error("AI_UNAVAILABLE", f"LLM interpretation unavailable: {e!s}", "Retry shortly; deterministic tools still work", retryable=True)
 
 
 @app.get("/signal/{symbol:path}")
@@ -347,7 +365,7 @@ async def api_signal(symbol: str = "BTC/USDT", price: float = 0, rsi: float = 50
     try:
         return await analyst.trading_signal(symbol=symbol, price=price, rsi=rsi, macd=macd, volume_trend=volume_trend)
     except Exception as e:
-        return {"symbol": symbol, "signal": "hold", "confidence": 0, "reason": f"AI unavailable: {e!s}", "fallback": True}
+        return make_error("AI_UNAVAILABLE", f"LLM interpretation unavailable: {e!s}", "Retry shortly; deterministic tools still work", retryable=True)
 
 
 @app.get("/whales")

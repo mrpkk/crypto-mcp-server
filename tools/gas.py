@@ -42,8 +42,8 @@ async def _native_price_usd(chain: str) -> tuple[float | None, list[str]]:
         from tools.price import get_price
 
         result = await get_price(symbol)
-        if isinstance(result, dict) and result.get("price_usd"):
-            return float(result["price_usd"]), []
+        if isinstance(result, dict) and result.get("data", {}).get("price_usd"):
+            return float(result["data"]["price_usd"]), []
     except Exception as exc:
         return None, [f"native price unavailable for {symbol}: {exc}"]
     return None, [f"USD estimates skipped — no live price for {symbol}"]
