@@ -5,7 +5,7 @@
 > Статус-легенда: `[ ]` todo · `[~]` in progress · `[x]` done (hash) · `[!]` blocked (причина).
 
 ## Текущий фокус
-S2 — Data Reality (следующий шаг: 06 regression-тест «мок не в прод»)
+S3 — Providers (следующий шаг: 07 providers/base.py)
 
 ---
 
@@ -30,7 +30,7 @@ S2 — Data Reality (следующий шаг: 06 regression-тест «мок 
   - [x] 5.1 `analyze_token`: цена через get_price()
   - [x] 5.2 `portfolio_health`: вход {symbol, amount}[], без выдуманных значений
   - [x] 5.3 Тесты: `tests/test_analysis_real_data.py`
-- [ ] 06. Regression: `tests/test_no_mocks_in_prod.py` (inspect.getsource: нет random/hardcode в прод-путях)
+- [x] 06. Regression: `tests/test_no_mocks_in_prod.py` (inspect.getsource: нет random/hardcode в прод-путях) (c8931b0)
 
 ## S3 — PROVIDERS (W3–4, P0)
 - [ ] 07. `providers/base.py` — ABC всех провайдеров + envelope helper
@@ -88,3 +88,4 @@ S2 — Data Reality (следующий шаг: 06 regression-тест «мок 
 | 03 | 2026-09-15 | Реальный gas: Web3 EIP-1559 + fallback + кэш 15с | 18f7f7a | 24 passed + live smoke | random удалён, живой RPC OK |
 | 04 | 2026-09-15 | WhaleProvider (Etherscan V2) + фильтры + USD | 8bb3590, 97278b5 | 32 passed + live smoke | CRV $10.8k реальный; ruff 0 |
 | 05 | 2026-09-15 | analysis.py: живые цены, HHI-диверсификация, честные null | 531a2e2 | 40 passed + live smoke | BTC $78167; цены 2024 удалены |
+| 06 | 2026-09-15 | Regression guard: random/моки не в прод + контракты | c8931b0 | 44 passed | S2 закрыт: 0 моков |
