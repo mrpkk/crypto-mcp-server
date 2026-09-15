@@ -5,7 +5,7 @@
 > Статус-легенда: `[ ]` todo · `[~]` in progress · `[x]` done (hash) · `[!]` blocked (причина).
 
 ## Текущий фокус
-S2 — Data Reality (следующий шаг: `providers/whale_provider.py` — Etherscan вместо хардкода)
+S2 — Data Reality (следующий шаг: `tools/analysis.py` — убрать цены 2024)
 
 ---
 
@@ -23,9 +23,9 @@ S2 — Data Reality (следующий шаг: `providers/whale_provider.py` �
 - [x] 03. `tools/gas.py` (18f7f7a) → реальный gas через Web3Client (6 сетей, кэш 15с, EIP-1559, fallback RPC)
   - [x] 3.1 Тест: `tests/test_gas_tracker.py` (gas > 0, не random, meta есть)
   - [x] 3.2 Тест fallback RPC (мок отказа первого RPC)
-- [ ] 04. `providers/whale_provider.py` + `tools/whales.py` → Etherscan (ключ из env), >$1M, без хардкода
-  - [ ] 4.1 ABC WhaleProvider: health/capabilities/get_transactions/get_alerts
-  - [ ] 4.2 Тесты: `tests/test_whales_real_data.py` (не hardcoded, envelope)
+- [x] 04. `providers/whale_provider.py` + `tools/whales.py` → Etherscan (ключ из env), >$1M, без хардкода
+  - [x] 4.1 ABC WhaleProvider: health/capabilities/get_transactions/get_alerts
+  - [x] 4.2 Тесты: `tests/test_whales_real_data.py` (не hardcoded, envelope)
 - [ ] 05. `tools/analysis.py` → убрать цены 2024; реальные входы или явная передача данных
   - [ ] 5.1 `analyze_token`: цена через get_price()
   - [ ] 5.2 `portfolio_health`: вход {symbol, amount}[], без выдуманных значений
@@ -86,3 +86,4 @@ S2 — Data Reality (следующий шаг: `providers/whale_provider.py` �
 | 01 | 2026-09-15 | Ветка + PROGRESS.md | 255e271 | baseline 13 passed | Старт v2 |
 | 02 | 2026-09-15 | AUDIT_REPORT.md (14 tools, file:line) | f7313b8 | — | 4 мока + 2 хардкод подтверждены |
 | 03 | 2026-09-15 | Реальный gas: Web3 EIP-1559 + fallback + кэш 15с | 18f7f7a | 24 passed + live smoke | random удалён, живой RPC OK |
+| 04 | 2026-09-15 | WhaleProvider (Etherscan V2) + фильтры + USD | 8bb3590, 97278b5 | 32 passed + live smoke | CRV $10.8k реальный; ruff 0 |
