@@ -6,14 +6,17 @@ recent transactions per queried address — it is NOT a full-market whale feed.
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
 import httpx
+
+logger = logging.getLogger(__name__)
 
 ETHERSCAN_V2_URL = "https://api.etherscan.io/v2/api"
 
@@ -90,8 +93,8 @@ class EtherscanWhaleProvider(WhaleProvider):
 
             if settings.etherscan_api_key:
                 return settings.etherscan_api_key
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("config settings unavailable, falling back to env: %s", exc)
         return os.getenv("ETHERSCAN_API_KEY", "")
 
     @property

@@ -1,15 +1,18 @@
+import itertools
+
 """Golden tests for technical indicators (tools/signal.py).
 
 RSI reference values computed with an independent recursive Wilder implementation
 and cross-checked against standard published examples.
 """
 import pytest
+
 from tools.signal import ema, rsi_wilder, sma, technical_indicators
 
 
 def rsi_reference(closes, period=14):
     """Independent recursive implementation for cross-checking."""
-    deltas = [b - a for a, b in zip(closes, closes[1:])]
+    deltas = [b - a for a, b in itertools.pairwise(closes)]
     avg_gain = sum(d for d in deltas[:period] if d > 0) / period
     avg_loss = sum(-d for d in deltas[:period] if d < 0) / period
     for d in deltas[period:]:

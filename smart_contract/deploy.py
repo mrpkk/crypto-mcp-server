@@ -4,9 +4,9 @@
 import json
 import os
 from pathlib import Path
+
 from web3 import Web3
 from web3.middleware import ExtraDataToPOAMiddleware
-
 
 CONTRACT_PATH = Path(__file__).parent / "YieldOptimizer.sol"
 DEPLOYED_PATH = Path(__file__).parent / "deployed.json"

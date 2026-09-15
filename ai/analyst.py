@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 from datetime import datetime, timezone
@@ -5,11 +6,14 @@ from typing import Any
 
 import httpx
 
+logger = logging.getLogger(__name__)
+
 try:
     from dotenv import load_dotenv
+
     load_dotenv(os.path.expanduser("~/.env"), override=True)
-except Exception:
-    pass
+except Exception as exc:
+    logger.debug("dotenv not available: %s", exc)
 
 PROVIDERS = [
     {"name": "GigaChat", "url": "https://gigachat.devices.sberbank.ru/api/v1/chat/completions",

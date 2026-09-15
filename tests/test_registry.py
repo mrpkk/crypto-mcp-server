@@ -17,11 +17,11 @@ EXPECTED_TOOLS = {
 
 def _load_server_module():
     try:
-        import mcp_server  # noqa: F401
+        import mcp_server
         return mcp_server
     except AttributeError:
         return None  # другая версия MCP SDK без декоратора list_tools
-    except Exception as e:
+    except Exception:
         # mcp-пакет может отсутствовать в CI — тогда проверяем статически наличие имён в коде
         src = (Path(__file__).resolve().parents[1] / "mcp_server.py").read_text()
         found = {name for name in EXPECTED_TOOLS if f'"{name}"' in src}

@@ -2,6 +2,7 @@
 
 import inspect
 from datetime import datetime, timedelta, timezone
+from typing import ClassVar
 
 import pytest
 
@@ -30,7 +31,7 @@ def _tx(tx_hash, amount, symbol="ETH", hours_ago=1, block=100):
 
 class FakeProvider:
     has_key = True
-    _txs: list = []
+    _txs: ClassVar[list] = []
 
     async def get_transactions(self, address, chain="ethereum", limit=50):
         return list(self._txs)

@@ -44,6 +44,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
+exclude = ["build", "dist"]
 
 [tool.ruff.lint]
 ignore = ["BLE001"]
