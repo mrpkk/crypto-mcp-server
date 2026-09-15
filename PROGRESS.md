@@ -5,7 +5,7 @@
 > Статус-легенда: `[ ]` todo · `[~]` in progress · `[x]` done (hash) · `[!]` blocked (причина).
 
 ## Текущий фокус
-S8 — Launch (следующий шаг: 35 AI Portfolio Doctor)
+S8 — Launch (почти закрыт: 40 — готовность к beta подтверждена, публикация за владельцем)
 
 ---
 
@@ -71,12 +71,12 @@ S8 — Launch (следующий шаг: 35 AI Portfolio Doctor)
 - [x] 34. Тесты: 13 новых (watchlists/alerts/streaming) (01dcd16)
 
 ## S8 — LAUNCH (W11–12, P2)
-- [ ] 35. AI Portfolio Doctor v1 (diversification/concentration/rebalance; без «гарантий прибыли»)
-- [ ] 36. Paper-trading backtest v1 (реальные OHLCV + виртуальный портфель)
-- [ ] 37. Docs-пакет: README (честный), ARCHITECTURE, API, MCP, DEPLOYMENT, CONFIGURATION, CHANGELOG
-- [ ] 38. CI/CD: ruff → pytest → pip-audit → build (починить согласование версий)
-- [ ] 39. Marketplace pack (Dealwork P1-площадка) + remote MCP/A2A manifest (FR-34/36)
-- [ ] 40. Публичный beta + чек-лист приёмки §10 SPEC
+- [x] 35. AI Portfolio Doctor v1 (diversification/concentration/rebalance; без «гарантий прибыли»)
+- [x] 36. Paper-trading backtest v1 (реальные OHLCV + виртуальный портфель)
+- [x] 37. Docs-пакет: README (честный), ARCHITECTURE, API, MCP, DEPLOYMENT, CONFIGURATION, CHANGELOG
+- [x] 38. CI/CD: ruff → pytest → pip-audit → build (починить согласование версий)
+- [x] 39. Marketplace pack (Dealwork P1-площадка) + remote MCP/A2A manifest (FR-34/36)
+- [~] 40. Готовность к beta: 100% (чек-лист ниже). Публикация/бренд — решение владельца (STOP-01)
 
 ---
 
@@ -101,3 +101,22 @@ S8 — Launch (следующий шаг: 35 AI Portfolio Doctor)
 | 19-25 | 2026-09-15 | LLM-цепочка (breaker) + structured outputs + контракты/бенчмарк/MCP-стратегия | 145aa0c | 121 passed + live GigaChat | S5 закрыт: sentiment bullish 60 |
 | 26-30 | 2026-09-15 | Market Pulse дашборд (static web/), дизайн-система, онбординг+DEMO, user flows; legacy HTML удалён (−214 строк) | 889e65f | 126 passed + live smoke | S6 закрыт |
 | 31-34 | 2026-09-15 | Watchlists + smart alerts (WHY IT MATTERS) + SSE-стрим + UI-панели | 01dcd16 | 139 passed + live smoke | S7 закрыт: alert сработал на gas 0.29 gwei |
+| 35-36 | 2026-09-15 | Portfolio Doctor v1 + backtest_strategy (paper trading на реальных свечах) | f5d4320 | 148 passed | реестр 16 tools |
+| 37-39 | 2026-09-15 | README честный, CHANGELOG, ARCHITECTURE, DEPLOYMENT, CI (ruff+pytest+build+pip-audit), marketplace pack | (коммит) | 148 passed | готово к листингу Dealwork |
+
+
+---
+
+## v2.0 ACCEPTANCE (по SPEC §10)
+
+- [x] 0 моков в production path (регрессионный тест зелёный)
+- [x] 100% ответов с `meta.source + timestamp + freshness`
+- [x] FR-8/9 без хардкод-цен (analysis live)
+- [x] Единая версия v2.0.0; `/health` живой
+- [x] API-ключи + RBAC + rate limiting + threat model T1–T8 (`docs/SECURITY.md`)
+- [x] Дашборд: Market Pulse + data-quality бейджи + onboarding (web/)
+- [x] Дисклеймер на всех выводах (`meta.disclaimer`)
+- [x] Пирамида тестов: unit/integration/contract; 148 тестов; CI зелёный
+- [x] Доки: README, CHANGELOG, ARCHITECTURE, DEPLOYMENT, SECURITY, MCP_TOOL_CONTRACTS, USER_FLOWS, LLM_PROVIDER_BENCHMARK, MCP_VERSION_STRATEGY, MARKETPLACE_PACK
+- [x] Метрики: latency-метрика в /metrics (p95 контроль — при нагрузке), uptime-цель 99.9%
+- [ ] Публичная beta и финальный бренд — STOP-01/решение владельца (ChainSight = рабочее имя)

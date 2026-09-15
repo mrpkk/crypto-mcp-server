@@ -1,0 +1,49 @@
+{
+  "name": "ChainSight",
+  "version": "2.0.0",
+  "type": "mcp-server",
+  "summary": "Crypto intelligence for AI agents and humans: 16 tools with real data, source provenance and honest degradation.",
+  "repo": "https://github.com/mrpkk/crypto-mcp-server",
+  "interfaces": {
+    "mcp": { "transport": "stdio", "entry": "python main.py" },
+    "rest": { "base": "http://127.0.0.1:8006", "docs": "/docs", "health": "/health", "metrics": "/metrics" },
+    "stream": { "sse_prices": "/stream/prices" }
+  },
+  "tools": [
+    { "name": "get_price", "group": "market", "source": "ccxt", "freshness_s": 10 },
+    { "name": "compare_prices", "group": "market", "source": "ccxt", "freshness_s": 10 },
+    { "name": "get_top_crypto", "group": "market", "source": "coingecko", "freshness_s": 300 },
+    { "name": "orderbook_depth", "group": "market", "source": "ccxt", "status": "planned" },
+    { "name": "get_yields", "group": "defi", "source": "defillama", "freshness_s": 300 },
+    { "name": "yield_assessment", "group": "defi", "source": "llm", "status": "requires_llm_key" },
+    { "name": "technical_analysis", "group": "technical", "source": "ccxt_ohlcv" },
+    { "name": "backtest_strategy", "group": "technical", "mode": "paper_simulation" },
+    { "name": "gas_tracker", "group": "onchain", "source": "web3_rpc", "freshness_s": 15 },
+    { "name": "estimate_tx_cost", "group": "onchain", "source": "web3_rpc", "freshness_s": 15 },
+    { "name": "track_whale", "group": "onchain", "source": "etherscan_v2", "requires": "ETHERSCAN_API_KEY" },
+    { "name": "whale_alerts", "group": "onchain", "source": "etherscan_v2", "requires": "ETHERSCAN_API_KEY" },
+    { "name": "analyze_token", "group": "portfolio", "source": "ccxt+coingecko" },
+    { "name": "portfolio_health", "group": "portfolio", "source": "live_valuation" },
+    { "name": "portfolio_doctor", "group": "portfolio", "tier": "pro" },
+    { "name": "market_sentiment", "group": "intelligence", "tier": "pro", "source": "llm_chain" },
+    { "name": "trading_signal", "group": "intelligence", "tier": "pro", "source": "llm_chain" }
+  ],
+  "pricing": {
+    "free": { "price": 0, "rate_limit_per_hour": 100, "scope": "market+defi read, anonymous" },
+    "pro": { "rate_limit_per_hour": 1000, "scope": "onchain+intelligence+portfolio doctor", "contact": "mrpkk" },
+    "enterprise": { "scope": "white-label, dedicated infra, SLA", "contact": "mrpkk" }
+  },
+  "honesty": {
+    "disclaimer": "Not financial advice.",
+    "provenance": "every response carries source, timestamp, freshness_seconds",
+    "no_mocks": true,
+    "limitations": [
+      "whale coverage = Etherscan free tier per queried address",
+      "AI tools require LLM credentials (GigaChat or GitHub Models)"
+    ]
+  },
+  "demo": {
+    "anonymous_access": true,
+    "note": "Free tier works without a key (100 req/h). Demo data is never mixed with live data; DEMO badge in UI."
+  }
+}
