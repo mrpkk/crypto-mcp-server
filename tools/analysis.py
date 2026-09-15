@@ -3,12 +3,14 @@
 All market numbers come from live sources (CCXT via tools.price / CoinGecko global).
 Missing inputs are reported as null with warnings instead of fabricated values.
 """
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any
 
 import httpx
+
+from providers.base import make_envelope, make_error
 
 STABLES = {"USDT", "USDC", "DAI", "FDUSD", "TUSD"}
 
@@ -22,31 +24,6 @@ _CATEGORY = {
     "ARB": "Layer 2 Scaling",
     "OP": "Layer 2 Scaling",
 }
-
-
-def _error(code: str, message: str, suggestion: str, retryable: bool = False) -> dict[str, Any]:
-    return {
-        "error": {
-            "code": code,
-            "message": message,
-            "retryable": retryable,
-            "suggested_action": suggestion,
-        }
-    }
-
-
-def _envelope(data: dict[str, Any], source: str, warnings: list[str] | None = None) -> dict[str, Any]:
-    return {
-        "data": data,
-        "meta": {
-            "source": source,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "freshness_seconds": 0,
-            "cached": False,
-            "degraded": bool(warnings),
-            "warnings": warnings or [],
-        },
-    }
 
 
 async def _fetch_price(symbol: str) -> float | None:
@@ -73,7 +50,9 @@ async def _fetch_global_market_cap() -> float | None:
         return None
 
 
-def _risk_score(market_cap: float | None, volume_24h: float | None, from_ath: float | None) -> int | None:
+def _risk_score(
+    market_cap: float | None, volume_24h: float | None, from_ath: float | None
+) -> int | None:
     if not market_cap:
         return None
     score = 40
@@ -107,13 +86,13 @@ async def analyze_token(
 ) -> dict[str, Any]:
     symbol = (symbol or "").upper()
     if not symbol:
-        return _error("BAD_SYMBOL", "Empty symbol", "Pass a token symbol, e.g. BTC")
+        return make_error("BAD_SYMBOL", "Empty symbol", "Pass a token symbol, e.g. BTC")
 
     warnings: list[str] = []
     if price_usd <= 0:
         price_usd = await _fetch_price(symbol) or 0
         if price_usd <= 0:
-            return _error(
+            return make_error(
                 "PRICE_UNAVAILABLE",
                 f"No live price for {symbol}/USDT",
                 "Check the symbol spelling or pass price_usd explicitly",
@@ -157,13 +136,15 @@ async def analyze_token(
         "market_dominance_pct": dominance,
         "risk_assessment": {
             "score": risk,
-            "level": None if risk is None else ("low" if risk > 70 else "medium" if risk > 40 else "high"),
+            "level": None
+            if risk is None
+            else ("low" if risk > 70 else "medium" if risk > 40 else "high"),
             "factors": [] if risk is None else _risk_factors(symbol, risk),
             "methodology": "heuristic score from market cap, volume ratio and drawdown — not investment advice",
         },
         "category": _CATEGORY.get(symbol, "Token"),
     }
-    return _envelope(data, source="ccxt+coingecko", warnings=warnings)
+    return make_envelope(data, source="ccxt+coingecko", warnings=warnings)
 
 
 def _risk_factors(symbol: str, score: int) -> list[str]:
@@ -180,7 +161,11 @@ def _risk_factors(symbol: str, score: int) -> list[str]:
 
 async def portfolio_health(holdings: list[dict[str, Any]]) -> dict[str, Any]:
     if not holdings:
-        return _error("EMPTY_PORTFOLIO", "No holdings provided", "Pass holdings=[{symbol, amount} or {symbol, value_usd}]")
+        return make_error(
+            "EMPTY_PORTFOLIO",
+            "No holdings provided",
+            "Pass holdings=[{symbol, amount} or {symbol, value_usd}]",
+        )
 
     warnings: list[str] = []
     details: list[dict[str, Any]] = []
@@ -190,7 +175,9 @@ async def portfolio_health(holdings: list[dict[str, Any]]) -> dict[str, Any]:
         if value is None and holding.get("amount") and symbol:
             price = await _fetch_price(symbol)
             if price is None:
-                warnings.append(f"{symbol}: no live price — value skipped (pass value_usd to include it)")
+                warnings.append(
+                    f"{symbol}: no live price — value skipped (pass value_usd to include it)"
+                )
                 continue
             value = float(holding["amount"]) * price
         if value is None:
@@ -200,7 +187,7 @@ async def portfolio_health(holdings: list[dict[str, Any]]) -> dict[str, Any]:
 
     total = sum(d["value_usd"] for d in details)
     if total <= 0:
-        return _error(
+        return make_error(
             "ZERO_VALUE",
             "Total portfolio value is 0",
             "Provide non-zero holdings with amount or value_usd",
@@ -215,7 +202,9 @@ async def portfolio_health(holdings: list[dict[str, Any]]) -> dict[str, Any]:
 
     suggestions: list[str] = []
     if top["weight_pct"] > 50:
-        suggestions.append(f"Top position {top['symbol']} is {top['weight_pct']}% — consider trimming for risk control")
+        suggestions.append(
+            f"Top position {top['symbol']} is {top['weight_pct']}% — consider trimming for risk control"
+        )
     if len(details) < 3:
         suggestions.append(f"Only {len(details)} asset(s) — diversification is limited")
     stable_pct = sum(d["weight_pct"] for d in details if d["symbol"] in STABLES)
@@ -228,8 +217,12 @@ async def portfolio_health(holdings: list[dict[str, Any]]) -> dict[str, Any]:
         "total_value_usd": round(total, 2),
         "assets": details,
         "diversity_score": diversity,
-        "concentration_risk": "high" if top["weight_pct"] > 50 else "medium" if top["weight_pct"] > 25 else "low",
+        "concentration_risk": "high"
+        if top["weight_pct"] > 50
+        else "medium"
+        if top["weight_pct"] > 25
+        else "low",
         "top_holding_pct": top["weight_pct"],
         "suggestions": suggestions,
     }
-    return _envelope(data, source="live portfolio valuation", warnings=warnings)
+    return make_envelope(data, source="live portfolio valuation", warnings=warnings)

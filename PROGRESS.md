@@ -5,7 +5,7 @@
 > Статус-легенда: `[ ]` todo · `[~]` in progress · `[x]` done (hash) · `[!]` blocked (причина).
 
 ## Текущий фокус
-S3 — Providers (следующий шаг: 07 providers/base.py)
+S3 — Providers (следующий шаг: 08 providers/market.py + ExchangePool)
 
 ---
 
@@ -33,7 +33,7 @@ S3 — Providers (следующий шаг: 07 providers/base.py)
 - [x] 06. Regression: `tests/test_no_mocks_in_prod.py` (inspect.getsource: нет random/hardcode в прод-путях) (c8931b0)
 
 ## S3 — PROVIDERS (W3–4, P0)
-- [ ] 07. `providers/base.py` — ABC всех провайдеров + envelope helper
+- [x] 07. `providers/base.py` — ABC всех провайдеров + envelope helper
 - [ ] 08. `providers/market.py` — CCXT + CoinGecko fallback; ExchangePool (singleton, lifecycle)
 - [ ] 09. `providers/onchain.py` — Web3Client wrapper (health/timeout/retry/cache)
 - [ ] 10. Envelope во все 14 tools (data+meta: source/timestamp/freshness/cached/degraded/warnings)
@@ -89,3 +89,4 @@ S3 — Providers (следующий шаг: 07 providers/base.py)
 | 04 | 2026-09-15 | WhaleProvider (Etherscan V2) + фильтры + USD | 8bb3590, 97278b5 | 32 passed + live smoke | CRV $10.8k реальный; ruff 0 |
 | 05 | 2026-09-15 | analysis.py: живые цены, HHI-диверсификация, честные null | 531a2e2 | 40 passed + live smoke | BTC $78167; цены 2024 удалены |
 | 06 | 2026-09-15 | Regression guard: random/моки не в прод + контракты | c8931b0 | 44 passed | S2 закрыт: 0 моков |
+| 07 | 2026-09-15 | providers/base.py: единые envelope/error + ABC | (коммит) | 49 passed | рефактор gas/whales/analysis на base |

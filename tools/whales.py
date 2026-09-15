@@ -9,6 +9,7 @@ from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from providers.base import make_envelope, make_error
 from providers.whale_provider import (
     ADDRESS_RE,
     EtherscanWhaleProvider,
@@ -28,37 +29,6 @@ FREE_TIER_NOTE = (
 
 def _get_provider() -> WhaleProvider:
     return EtherscanWhaleProvider()
-
-
-def _error(code: str, message: str, suggestion: str, retryable: bool = False) -> dict[str, Any]:
-    return {
-        "error": {
-            "code": code,
-            "message": message,
-            "retryable": retryable,
-            "suggested_action": suggestion,
-        }
-    }
-
-
-def _envelope(
-    data: dict[str, Any],
-    source: str,
-    warnings: list[str] | None = None,
-    cached: bool = False,
-    freshness: float = 0,
-) -> dict[str, Any]:
-    return {
-        "data": data,
-        "meta": {
-            "source": source,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "freshness_seconds": freshness,
-            "cached": cached,
-            "degraded": bool(warnings),
-            "warnings": warnings or [],
-        },
-    }
 
 
 def _cache_lookup(key: str) -> dict[str, Any] | None:
@@ -109,10 +79,10 @@ async def _convert_usd(txs: list[WhaleTransaction]) -> list[str]:
     return warnings
 
 
-def _provider_or_error() -> WhaleProvider | dict[str, Any]:
+def _provider_ormake_error() -> WhaleProvider | dict[str, Any]:
     provider = _get_provider()
     if not provider.has_key:
-        return _error(
+        return make_error(
             "MISSING_API_KEY",
             "ETHERSCAN_API_KEY is not configured",
             "Add a free ETHERSCAN_API_KEY to ~/.env — without it Etherscan V2 returns no data",
@@ -127,13 +97,13 @@ async def track_whale(
     limit: int = 25,
 ) -> dict[str, Any]:
     if not ADDRESS_RE.match(address or ""):
-        return _error(
+        return make_error(
             "BAD_ADDRESS",
             f"Invalid EVM address: {address!r}",
             "Pass a 0x-prefixed 40-hex address, e.g. 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
         )
 
-    provider = _provider_or_error()
+    provider = _provider_ormake_error()
     if isinstance(provider, dict):
         return provider
 
@@ -145,7 +115,7 @@ async def track_whale(
     try:
         txs = await provider.get_transactions(address, chain, limit)
     except Exception as exc:
-        return _error(
+        return make_error(
             "PROVIDER_UNAVAILABLE",
             f"Etherscan request failed: {exc}",
             "Retry shortly — free tier is rate limited (~5 req/s)",
@@ -166,7 +136,7 @@ async def track_whale(
         "transactions": [asdict(t) for t in kept],
         "count": len(kept),
     }
-    payload = _envelope(data, source="etherscan-v2", warnings=warnings)
+    payload = make_envelope(data, source="etherscan-v2", warnings=warnings)
     _cache_store(cache_key, payload)
     return payload
 
@@ -182,7 +152,7 @@ async def whale_alerts(
         a.strip() for a in os.getenv("WHALE_WATCHLIST", "").split(",") if a.strip()
     ]
     if not watchlist:
-        return _error(
+        return make_error(
             "NOT_CONFIGURED",
             "No watchlist addresses provided",
             "Pass addresses=[...] or set WHALE_WATCHLIST=0x...,0x... in ~/.env",
@@ -190,13 +160,13 @@ async def whale_alerts(
 
     bad = [a for a in watchlist if not ADDRESS_RE.match(a)]
     if bad:
-        return _error(
+        return make_error(
             "BAD_ADDRESS",
             f"Invalid EVM address(es): {', '.join(bad)}",
             "All addresses must be 0x-prefixed 40-hex",
         )
 
-    provider = _provider_or_error()
+    provider = _provider_ormake_error()
     if isinstance(provider, dict):
         return provider
 
@@ -210,7 +180,7 @@ async def whale_alerts(
     try:
         txs = await provider.get_alerts(watchlist, chain, min_value_usd, limit)
     except Exception as exc:
-        return _error(
+        return make_error(
             "PROVIDER_UNAVAILABLE",
             f"Etherscan request failed: {exc}",
             "Retry shortly — free tier is rate limited (~5 req/s)",
@@ -233,6 +203,6 @@ async def whale_alerts(
         "alerts": [asdict(t) for t in filtered[:limit]],
         "count": len(filtered[:limit]),
     }
-    payload = _envelope(data, source="etherscan-v2", warnings=warnings)
+    payload = make_envelope(data, source="etherscan-v2", warnings=warnings)
     _cache_store(cache_key, payload)
     return payload

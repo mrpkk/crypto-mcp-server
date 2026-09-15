@@ -1,9 +1,9 @@
 import copy
 import time
-from datetime import datetime, timezone
 from typing import Any
 
 from chain.client import Web3Client
+from providers.base import make_envelope, make_error
 
 SUPPORTED_CHAINS = ("ethereum", "bsc", "polygon", "arbitrum", "optimism", "base")
 
@@ -25,33 +25,6 @@ GAS_LIMITS = {
 
 CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
 CACHE_TTL = 15
-
-
-def _error(code: str, message: str, suggestion: str, retryable: bool = False) -> dict[str, Any]:
-    return {
-        "error": {
-            "code": code,
-            "message": message,
-            "retryable": retryable,
-            "suggested_action": suggestion,
-        }
-    }
-
-
-def _envelope(
-    data: dict[str, Any], source: str, warnings: list[str] | None = None
-) -> dict[str, Any]:
-    return {
-        "data": data,
-        "meta": {
-            "source": source,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "freshness_seconds": 0,
-            "cached": False,
-            "degraded": bool(warnings),
-            "warnings": warnings or [],
-        },
-    }
 
 
 def _gas_levels(base_gwei: float, priority_gwei: float) -> dict[str, dict[str, Any]]:
@@ -79,7 +52,7 @@ async def _native_price_usd(chain: str) -> tuple[float | None, list[str]]:
 async def gas_tracker(chain: str = "ethereum") -> dict[str, Any]:
     chain = (chain or "ethereum").lower()
     if chain not in SUPPORTED_CHAINS:
-        return _error(
+        return make_error(
             "UNSUPPORTED_CHAIN",
             f"Unsupported chain: {chain}",
             f"Use one of: {', '.join(SUPPORTED_CHAINS)}",
@@ -98,7 +71,7 @@ async def gas_tracker(chain: str = "ethereum") -> dict[str, Any]:
         client = Web3Client.connect_with_fallback(chain)
         info = client.get_gas_info()
     except Exception as exc:
-        return _error(
+        return make_error(
             "RPC_UNAVAILABLE",
             f"All RPC endpoints failed for {chain}: {exc}",
             "Retry in a few seconds or pick another chain",
@@ -130,7 +103,7 @@ async def gas_tracker(chain: str = "ethereum") -> dict[str, Any]:
         "native_price_usd": native_usd,
         "estimated_tx_cost_usd": cost_usd,
     }
-    payload = _envelope(data, source=f"web3:{info['rpc_url']}", warnings=warnings)
+    payload = make_envelope(data, source=f"web3:{info['rpc_url']}", warnings=warnings)
     CACHE[chain] = (now, payload)
     return payload
 
@@ -146,7 +119,7 @@ async def estimate_tx_cost(
 
     levels = gas["data"]["gas_levels"]
     if speed not in levels:
-        return _error(
+        return make_error(
             "BAD_SPEED",
             f"Unknown speed: {speed}",
             f"Use one of: {', '.join(levels.keys())}",
