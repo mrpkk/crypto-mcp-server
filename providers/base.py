@@ -33,6 +33,7 @@ def make_envelope(
             "cached": cached,
             "degraded": bool(warnings),
             "warnings": warnings or [],
+            "disclaimer": "Not financial advice.",
         },
     }
 

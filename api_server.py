@@ -4,6 +4,8 @@
 import logging
 import os
 import sys
+import time
+import uuid
 from datetime import datetime, timezone
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as pkg_version
@@ -15,13 +17,15 @@ sys.path.insert(0, str(Path(__file__).parent))
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from pydantic import BaseModel
 
 from ai.analyst import CryptoAnalyst
+from auth.keys import APIKeyStore
 from config import settings
+from observability import configure_json_logging, metrics
 from providers.base import make_error
-from rate_limit import EXEMPT_PATHS, RateLimiter, client_identity, limit_for_tier, resolve_tier
+from rate_limit import EXEMPT_PATHS, RateLimiter, client_identity, limit_for_tier
 from tools.analysis import analyze_token, portfolio_health
 from tools.gas import estimate_tx_cost, gas_tracker
 from tools.price import compare_prices, get_price, get_top_crypto
@@ -79,7 +83,7 @@ app.add_middleware(
 )
 
 rate_limiter = RateLimiter()
-PRO_API_KEYS = {k.strip() for k in os.getenv("PRO_API_KEYS", "").split(",") if k.strip()}
+api_key_store = APIKeyStore(settings.db_path)
 
 
 @app.middleware("http")
@@ -88,7 +92,21 @@ async def rate_limit_middleware(request, call_next):
         return await call_next(request)
     api_key = request.headers.get("x-api-key")
     identity = client_identity(dict(request.headers), request.client.host if request.client else None)
-    tier = resolve_tier(api_key, PRO_API_KEYS)
+    if api_key:
+        key_info = api_key_store.verify(api_key)
+        if key_info is None:
+            return JSONResponse(
+                make_error(
+                    "INVALID_API_KEY",
+                    "The provided API key is unknown or revoked",
+                    "Create a new key via /admin/keys (owner) or drop the x-api-key header for free anonymous access",
+                ),
+                status_code=401,
+            )
+        tier = key_info["tier"]
+        api_key_store.record_usage(api_key, request.url.path)
+    else:
+        tier = "free"
     limit = limit_for_tier(tier)
     decision = rate_limiter.check(identity, limit)
     if not decision.allowed:
@@ -106,9 +124,15 @@ async def rate_limit_middleware(request, call_next):
                 "X-RateLimit-Remaining": "0",
             },
         )
+    start = time.perf_counter()
     response = await call_next(request)
+    latency = time.perf_counter() - start
     response.headers["X-RateLimit-Limit"] = str(limit)
     response.headers["X-RateLimit-Remaining"] = str(decision.remaining)
+    request_id = request.headers.get("x-request-id") or uuid.uuid4().hex[:12]
+    response.headers["X-Request-ID"] = request_id
+    metrics.inc("http_requests_total", {"path": request.url.path, "status": str(response.status_code)})
+    metrics.observe_latency("http_request_latency_seconds", latency, {"path": request.url.path})
     return response
 
 
@@ -342,6 +366,12 @@ async def root():
 
 
 
+@app.get("/metrics", response_class=PlainTextResponse)
+async def prometheus_metrics():
+    """Prometheus-compatible metrics (text exposition format)."""
+    return metrics.render_prometheus()
+
+
 @app.get("/health")
 async def health():
     """Liveness probe: process is up."""
@@ -497,6 +527,7 @@ async def api_track_whale(address: str):
 
 
 if __name__ == "__main__":
+    configure_json_logging()
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8006
     print(f"🚀 Crypto MCP API running on http://127.0.0.1:{port}")
     print(f"📖 Swagger: http://127.0.0.1:{port}/docs")

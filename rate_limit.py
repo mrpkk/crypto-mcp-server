@@ -15,7 +15,7 @@ FREE_LIMIT_PER_HOUR = 100
 PRO_LIMIT_PER_HOUR = 1000
 WINDOW_SECONDS = 3600
 
-EXEMPT_PATHS = {"/health", "/ready", "/docs", "/openapi.json", "/redoc", "/favicon.ico"}
+EXEMPT_PATHS = {"/health", "/ready", "/metrics", "/docs", "/openapi.json", "/redoc", "/favicon.ico"}
 
 
 @dataclass
