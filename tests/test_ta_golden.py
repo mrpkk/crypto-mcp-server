@@ -62,13 +62,15 @@ async def test_indicators_from_synthetic_closes(monkeypatch):
     monkeypatch.setattr("tools.signal._fetch_closes", fake_fetch)
 
     out = await technical_indicators("TEST/USDT", exchange="binance")
-    assert out["source"] == "ohlcv"
-    assert out["candles_used"] == len(closes)
-    assert out["price_usd"] == pytest.approx(round(closes[-1], 2))
-    assert 0 <= out["rsi_14"] <= 100
-    macd = out["macd"]
+    assert set(out) == {"data", "meta"}
+    data = out["data"]
+    assert out["meta"]["source"] == "ohlcv:binance"
+    assert data["candles_used"] == len(closes)
+    assert data["price_usd"] == pytest.approx(round(closes[-1], 2))
+    assert 0 <= data["rsi_14"] <= 100
+    macd = data["macd"]
     assert macd["histogram"] == pytest.approx(macd["macd_line"] - macd["signal_line"], abs=1e-3)
-    sr = out["support_resistance"]
+    sr = data["support_resistance"]
     assert sr["support_1"] == round(min(closes[-90:]), 2)
     assert sr["resistance_1"] == round(max(closes[-90:]), 2)
 
@@ -79,5 +81,9 @@ async def test_indicators_fallback_when_no_data(monkeypatch):
         return None
     monkeypatch.setattr("tools.signal._fetch_closes", broken_fetch)
     out = await technical_indicators("UNKNOWN/USDT")
-    assert out["source"] == "estimated"
-    assert out["price_usd"] == 100.0
+    assert out["error"]["code"] == "OHLCV_UNAVAILABLE"
+
+    priced = await technical_indicators("UNKNOWN/USDT", price=123.45)
+    assert priced["data"]["price_usd"] == 123.45
+    assert priced["data"]["rsi_14"] is None
+    assert priced["meta"]["degraded"] is True

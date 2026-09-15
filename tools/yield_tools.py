@@ -1,7 +1,14 @@
+"""DeFi yields — real DeFi Llama data only. Unavailable provider = honest error (no fabricated fallback)."""
+from __future__ import annotations
+
 from datetime import datetime, timezone
 from typing import Any
 
 import httpx
+
+from providers.base import make_envelope, make_error
+
+DEFI_LLAMA_POOLS = "https://yields.llama.fi/pools"
 
 DEFI_PROTOCOLS = [
     {"name": "Lido", "url": "https://api.lido.fi", "type": "liquid_staking"},
@@ -14,57 +21,61 @@ DEFI_PROTOCOLS = [
 ]
 
 
-async def get_yields(min_apy: float = 0, chain: str = "all", max_results: int = 20) -> list[dict[str, Any]]:
-    all_opportunities = []
-
+async def get_yields(min_apy: float = 0, chain: str = "all", max_results: int = 20) -> dict[str, Any]:
     try:
         async with httpx.AsyncClient(timeout=15) as client:
-            resp = await client.get("https://yields.llama.fi/pools")
-            if resp.status_code == 200:
-                data = resp.json()
-                for pool in data.get("data", [])[:100]:
-                    apy = pool.get("apy", 0) or pool.get("apyBase", 0) or 0
-                    tvl = pool.get("tvlUsd", 0) or 0
-                    pool_chain = pool.get("chain", "unknown").lower()
-                    project = pool.get("project", "unknown")
+            resp = await client.get(DEFI_LLAMA_POOLS)
+            if resp.status_code != 200:
+                raise RuntimeError(f"DeFi Llama returned {resp.status_code}")
+            payload = resp.json()
+    except Exception as exc:
+        return make_error(
+            "DEFI_LLAMA_UNAVAILABLE",
+            f"DeFi Llama pools request failed: {exc}",
+            "Retry shortly — DeFi Llama is rate limited sometimes",
+            retryable=True,
+        )
 
-                    if apy < min_apy:
-                        continue
-                    if chain != "all" and pool_chain != chain.lower():
-                        continue
+    opportunities: list[dict[str, Any]] = []
+    for pool in payload.get("data", [])[:100]:
+        apy = pool.get("apy", 0) or pool.get("apyBase", 0) or 0
+        pool_chain = pool.get("chain", "unknown").lower()
 
-                    all_opportunities.append({
-                        "protocol": project,
-                        "pool": pool.get("symbol", pool.get("pool", "unknown")),
-                        "chain": pool_chain,
-                        "apy": round(apy, 2),
-                        "tvl_usd": round(tvl, 0),
-                        "apy_base": round(pool.get("apyBase", 0), 2),
-                        "apy_reward": round(pool.get("apyReward", 0), 2),
-                        "updated": datetime.now(timezone.utc).isoformat(),
-                    })
-    except Exception:
-        all_opportunities = FALLBACK_YIELDS
+        if apy < min_apy:
+            continue
+        if chain != "all" and pool_chain != chain.lower():
+            continue
 
-    sorted_opps = sorted(all_opportunities, key=lambda x: x["apy"], reverse=True)
-    return sorted_opps[:max_results]
+        opportunities.append(
+            {
+                "protocol": pool.get("project", "unknown"),
+                "pool": pool.get("symbol", pool.get("pool", "unknown")),
+                "chain": pool_chain,
+                "apy": round(apy, 2),
+                "tvl_usd": round(pool.get("tvlUsd", 0) or 0),
+                "apy_base": round(pool.get("apyBase", 0) or 0, 2),
+                "apy_reward": round(pool.get("apyReward", 0) or 0, 2),
+            }
+        )
+
+    opportunities.sort(key=lambda item: item["apy"], reverse=True)
+    items = opportunities[:max_results]
+    data = {
+        "items": items,
+        "count": len(items),
+        "filters": {"min_apy": min_apy, "chain": chain},
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    return make_envelope(data, source="defillama")
 
 
 async def get_protocol_info(name: str) -> dict[str, Any]:
     protocols_map = {p["name"].lower(): p for p in DEFI_PROTOCOLS}
     protocol = protocols_map.get(name.lower())
     if not protocol:
-        return {"error": f"Protocol '{name}' not found. Available: {', '.join(p['name'] for p in DEFI_PROTOCOLS)}"}
-    return protocol
-
-
-FALLBACK_YIELDS = [
-    {"protocol": "Lido", "pool": "stETH", "chain": "ethereum", "apy": 3.2, "tvl_usd": 38_000_000_000, "type": "liquid_staking"},
-    {"protocol": "Aave", "pool": "USDC", "chain": "ethereum", "apy": 5.8, "tvl_usd": 12_000_000_000, "type": "lending"},
-    {"protocol": "Morpho", "pool": "USDC", "chain": "ethereum", "apy": 7.2, "tvl_usd": 3_000_000_000, "type": "lending"},
-    {"protocol": "EigenLayer", "pool": "ETH Restaking", "chain": "ethereum", "apy": 4.1, "tvl_usd": 15_000_000_000, "type": "restaking"},
-    {"protocol": "Curve", "pool": "3pool", "chain": "ethereum", "apy": 6.5, "tvl_usd": 2_500_000_000, "type": "stable_swap"},
-    {"protocol": "Aave", "pool": "USDC", "chain": "polygon", "apy": 4.9, "tvl_usd": 800_000_000, "type": "lending"},
-    {"protocol": "Compound", "pool": "ETH", "chain": "ethereum", "apy": 3.8, "tvl_usd": 1_500_000_000, "type": "lending"},
-    {"protocol": "Uniswap", "pool": "ETH/USDC", "chain": "arbitrum", "apy": 12.5, "tvl_usd": 1_200_000_000, "type": "dex"},
-]
+        return make_error(
+            "PROTOCOL_NOT_FOUND",
+            f"Protocol '{name}' not found",
+            f"Available: {', '.join(p['name'] for p in DEFI_PROTOCOLS)}",
+        )
+    return make_envelope(protocol, source="static protocol registry")
