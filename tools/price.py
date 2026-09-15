@@ -3,8 +3,9 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-import ccxt.async_support as ccxt
 import httpx
+
+from providers.market import ExchangePool
 
 logger = logging.getLogger(__name__)
 
@@ -14,14 +15,8 @@ FETCH_CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
 
 
 def _get_exchange(name: str):
-    cls = getattr(ccxt, name, None)
-    if cls is None:
-        return None
-    return cls({
-        "enableRateLimit": True,
-        "timeout": 8000,  # 8s таймаут
-        "options": {"defaultType": "spot"},
-    })
+    """Pooled CCXT client (legacy hook kept for tests)."""
+    return ExchangePool.get(name)
 
 
 async def get_price(symbol: str = "BTC/USDT", exchange: str = "binance") -> dict[str, Any]:
@@ -60,8 +55,6 @@ async def get_price(symbol: str = "BTC/USDT", exchange: str = "binance") -> dict
         return {"error": f"No price data for {symbol} on {exchange}"}
     except Exception as e:
         return {"error": f"Failed to fetch {symbol}: {e}"}
-    finally:
-        await ex.close()
 
 
 async def get_top_crypto(limit: int = 10) -> list[dict[str, Any]]:
@@ -101,7 +94,6 @@ async def compare_prices(symbol: str = "BTC/USDT") -> list[dict[str, Any]]:
             t = await asyncio.wait_for(ex.fetch_ticker(symbol), timeout=10)
             if t and t.get("last"):
                 results.append({"exchange": name, "price": t["last"], "bid": t.get("bid"), "ask": t.get("ask")})
-            await ex.close()
         except Exception as e:
             logger.debug("ticker fetch failed for %s: %s", name, e)
 
