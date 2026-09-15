@@ -89,4 +89,4 @@ S3 — Providers (следующий шаг: 08 providers/market.py + ExchangePo
 | 04 | 2026-09-15 | WhaleProvider (Etherscan V2) + фильтры + USD | 8bb3590, 97278b5 | 32 passed + live smoke | CRV $10.8k реальный; ruff 0 |
 | 05 | 2026-09-15 | analysis.py: живые цены, HHI-диверсификация, честные null | 531a2e2 | 40 passed + live smoke | BTC $78167; цены 2024 удалены |
 | 06 | 2026-09-15 | Regression guard: random/моки не в прод + контракты | c8931b0 | 44 passed | S2 закрыт: 0 моков |
-| 07 | 2026-09-15 | providers/base.py: единые envelope/error + ABC | (коммит) | 49 passed | рефактор gas/whales/analysis на base |
+| 07 | 2026-09-15 | providers/base.py: единые envelope/error + ABC | 01aa23d | 49 passed | рефактор gas/whales/analysis на base |
