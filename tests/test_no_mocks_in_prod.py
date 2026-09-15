@@ -63,24 +63,12 @@ async def test_error_contract_is_uniform(monkeypatch):
 async def test_envelope_structure_is_uniform(monkeypatch):
     import tools.analysis as analysis_module
     import tools.gas as gas_module
+    from tests.test_gas_tracker import FakeProvider
     from tools.analysis import analyze_token
     from tools.gas import gas_tracker
 
-    class FakeWeb3Client:
-        rpc_url = "https://fake.example"
-
-        @classmethod
-        def connect_with_fallback(cls, chain="ethereum", rpc_urls=None):
-            return cls()
-
-        def get_gas_info(self):
-            return {
-                "gas_price_wei": 20_000_000_000,
-                "base_fee_wei": 18_000_000_000,
-                "priority_fee_wei": 1_000_000_000,
-                "supports_eip1559": True,
-                "rpc_url": self.rpc_url,
-            }
+    def _fake_provider():
+        return FakeProvider()
 
     async def _price(symbol):
         return 100.0
@@ -88,7 +76,7 @@ async def test_envelope_structure_is_uniform(monkeypatch):
     async def _no_native_price(chain):
         return None, ["no live price"]
 
-    monkeypatch.setattr(gas_module, "Web3Client", FakeWeb3Client)
+    monkeypatch.setattr(gas_module, "_get_onchain_provider", _fake_provider)
     monkeypatch.setattr(gas_module, "_native_price_usd", _no_native_price)
     monkeypatch.setattr(analysis_module, "_fetch_price", _price)
 

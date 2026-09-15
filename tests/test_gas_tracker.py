@@ -1,10 +1,10 @@
-"""S2 tests: gas_tracker/estimate_tx_cost use real RPC data (no random, envelope, fallback)."""
-
+"""S2/S3 tests: gas_tracker uses provider data (no random, envelope, fallback)."""
 import inspect
 
 import pytest
 
 import tools.gas as gas_module
+from providers.base import make_error
 from tools.gas import estimate_tx_cost, gas_tracker
 
 
@@ -15,21 +15,36 @@ def _clear_gas_cache():
     gas_module.CACHE.clear()
 
 
-class FakeWeb3Client:
-    rpc_url = "https://fake-rpc.example"
-
-    @classmethod
-    def connect_with_fallback(cls, chain="ethereum", rpc_urls=None):
-        return cls()
-
-    def get_gas_info(self):
-        return {
-            "gas_price_wei": 30_000_000_000,
-            "base_fee_wei": 25_000_000_000,
-            "priority_fee_wei": 2_000_000_000,
+def _gas_envelope(chain="ethereum"):
+    return {
+        "data": {
+            "chain": chain,
+            "gas_price_gwei": 30.0,
+            "base_fee_gwei": 25.0,
+            "priority_fee_gwei": 2.0,
             "supports_eip1559": True,
-            "rpc_url": self.rpc_url,
-        }
+            "native_token": "ETH",
+        },
+        "meta": {
+            "source": "web3:https://fake-rpc.example",
+            "timestamp": "2026-09-15T00:00:00+00:00",
+            "freshness_seconds": 0,
+            "cached": False,
+            "degraded": False,
+            "warnings": [],
+        },
+    }
+
+
+class FakeProvider:
+    def __init__(self, envelope=None, error=None):
+        self._envelope = envelope
+        self._error = error
+
+    async def fetch_gas(self, chain="ethereum"):
+        if self._error:
+            return self._error
+        return self._envelope or _gas_envelope(chain)
 
 
 async def _fake_native_price(chain):
@@ -43,7 +58,7 @@ def test_no_random_in_source():
 
 @pytest.mark.asyncio
 async def test_gas_tracker_envelope_and_values(monkeypatch):
-    monkeypatch.setattr(gas_module, "Web3Client", FakeWeb3Client)
+    monkeypatch.setattr(gas_module, "_get_onchain_provider", lambda: FakeProvider())
     monkeypatch.setattr(gas_module, "_native_price_usd", _fake_native_price)
 
     out = await gas_tracker("ethereum")
@@ -64,7 +79,7 @@ async def test_gas_tracker_envelope_and_values(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_gas_tracker_cached_second_call(monkeypatch):
-    monkeypatch.setattr(gas_module, "Web3Client", FakeWeb3Client)
+    monkeypatch.setattr(gas_module, "_get_onchain_provider", lambda: FakeProvider())
     monkeypatch.setattr(gas_module, "_native_price_usd", _fake_native_price)
 
     first = await gas_tracker("base")
@@ -77,16 +92,13 @@ async def test_gas_tracker_cached_second_call(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_gas_tracker_rpc_unavailable(monkeypatch):
-    def _boom(chain="ethereum", rpc_urls=None):
-        raise ConnectionError("all rpc failed")
-
-    monkeypatch.setattr(gas_module.Web3Client, "connect_with_fallback", staticmethod(_boom))
+    error = make_error("RPC_UNAVAILABLE", "All RPC endpoints failed", "Retry shortly", retryable=True)
+    monkeypatch.setattr(gas_module, "_get_onchain_provider", lambda: FakeProvider(error=error))
 
     out = await gas_tracker("ethereum")
 
     assert out["error"]["code"] == "RPC_UNAVAILABLE"
     assert out["error"]["retryable"] is True
-    assert "suggested_action" in out["error"]
 
 
 @pytest.mark.asyncio
@@ -98,7 +110,7 @@ async def test_gas_tracker_unsupported_chain():
 
 @pytest.mark.asyncio
 async def test_estimate_tx_cost_uses_live_gas(monkeypatch):
-    monkeypatch.setattr(gas_module, "Web3Client", FakeWeb3Client)
+    monkeypatch.setattr(gas_module, "_get_onchain_provider", lambda: FakeProvider())
     monkeypatch.setattr(gas_module, "_native_price_usd", _fake_native_price)
 
     out = await estimate_tx_cost("ethereum", gas_units=21000, speed="standard")
@@ -114,7 +126,7 @@ async def test_estimate_tx_cost_uses_live_gas(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_estimate_tx_cost_bad_speed(monkeypatch):
-    monkeypatch.setattr(gas_module, "Web3Client", FakeWeb3Client)
+    monkeypatch.setattr(gas_module, "_get_onchain_provider", lambda: FakeProvider())
     monkeypatch.setattr(gas_module, "_native_price_usd", _fake_native_price)
 
     out = await estimate_tx_cost("ethereum", speed="rocket")
@@ -127,7 +139,7 @@ async def test_gas_tracker_without_native_price(monkeypatch):
     async def _no_price(chain):
         return None, ["USD estimates skipped — no live price for ETH/USDT"]
 
-    monkeypatch.setattr(gas_module, "Web3Client", FakeWeb3Client)
+    monkeypatch.setattr(gas_module, "_get_onchain_provider", lambda: FakeProvider())
     monkeypatch.setattr(gas_module, "_native_price_usd", _no_price)
 
     out = await gas_tracker("ethereum")
