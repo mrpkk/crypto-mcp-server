@@ -5,7 +5,7 @@
 > Статус-легенда: `[ ]` todo · `[~]` in progress · `[x]` done (hash) · `[!]` blocked (причина).
 
 ## Текущий фокус
-S3 — Providers (следующий шаг: 10 envelope во все 14 tools)
+S3 — Providers (следующий шаг: 11 /health /ready /version /capabilities + единая версия)
 
 ---
 
@@ -36,7 +36,7 @@ S3 — Providers (следующий шаг: 10 envelope во все 14 tools)
 - [x] 07. `providers/base.py` — ABC всех провайдеров + envelope helper
 - [x] 08. `providers/market.py` — CCXT + CoinGecko fallback; ExchangePool (singleton, lifecycle) (425b372)
 - [x] 09. `providers/onchain.py` — Web3Client wrapper (health/timeout/retry/cache) (3a7acd5)
-- [ ] 10. Envelope во все 14 tools (data+meta: source/timestamp/freshness/cached/degraded/warnings)
+- [~] 10. Envelope во все 14 tools (09f9aff: price-группа готова; осталось yield/signal/ai)
 - [ ] 11. `/health`, `/ready`, `/version`, `/capabilities` + единый version source (v2.0.0)
 - [ ] 12. Rate limiting (per-key/per-tier) + CORS-фикс (один middleware, allowlist)
 - [ ] 13. Тесты: test_providers.py, test_envelope.py, test_health.py
@@ -92,3 +92,4 @@ S3 — Providers (следующий шаг: 10 envelope во все 14 tools)
 | 07 | 2026-09-15 | providers/base.py: единые envelope/error + ABC | 01aa23d | 49 passed | рефактор gas/whales/analysis на base |
 | 08 | 2026-09-15 | ExchangePool + CCXTMarketProvider (price.py без churn) | 425b372 | 59 passed + live | BTC $77992, пул 1 клиент |
 | 09 | 2026-09-15 | RPCOneChainProvider (to_thread) + gas на провайдерах | 3a7acd5 | 66 passed + live | base 0.005 gwei, $0.0023 swap |
+| 10 | 2026-09-15 | Envelope price-группы + api_server: CORS-fix, POST /portfolio, честные AI-ошибки | 09f9aff | 66 passed + REST smoke | BTC $77986 живой |
