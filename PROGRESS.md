@@ -87,4 +87,4 @@ S2 — Data Reality (следующий шаг: 06 regression-тест «мок 
 | 02 | 2026-09-15 | AUDIT_REPORT.md (14 tools, file:line) | f7313b8 | — | 4 мока + 2 хардкод подтверждены |
 | 03 | 2026-09-15 | Реальный gas: Web3 EIP-1559 + fallback + кэш 15с | 18f7f7a | 24 passed + live smoke | random удалён, живой RPC OK |
 | 04 | 2026-09-15 | WhaleProvider (Etherscan V2) + фильтры + USD | 8bb3590, 97278b5 | 32 passed + live smoke | CRV $10.8k реальный; ruff 0 |
-| 05 | 2026-09-15 | analysis.py: живые цены, HHI-диверсификация, честные null | (коммит) | 40 passed + live smoke | BTC $78167; цены 2024 удалены |
+| 05 | 2026-09-15 | analysis.py: живые цены, HHI-диверсификация, честные null | 531a2e2 | 40 passed + live smoke | BTC $78167; цены 2024 удалены |
