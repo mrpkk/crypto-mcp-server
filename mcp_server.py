@@ -16,7 +16,9 @@ from ai.analyst import CryptoAnalyst
 from config import settings
 from providers.base import make_error
 from tools.analysis import analyze_token, portfolio_health
+from tools.backtest import backtest_strategy
 from tools.gas import estimate_tx_cost, gas_tracker
+from tools.portfolio import portfolio_doctor
 from tools.price import compare_prices, get_price, get_top_crypto
 from tools.signal import technical_indicators
 from tools.whales import track_whale, whale_alerts
@@ -118,6 +120,29 @@ async def tool_whale_alerts(
 ) -> str:
     return await _safe(
         whale_alerts(min_value_usd=min_value_usd, timeframe_hours=timeframe_hours, addresses=addresses, chain=chain)
+    )
+
+
+@mcp.tool(name="portfolio_doctor", description="Portfolio Doctor: concentration, risk score, drawdown scenario and rebalance suggestions from real holdings.")
+async def tool_portfolio_doctor(holdings: list[dict[str, Any]] | None = None) -> str:
+    return await _safe(portfolio_doctor(holdings=holdings or []))
+
+
+@mcp.tool(name="backtest_strategy", description="Paper-trading backtest (SMA-cross or RSI-reversion) on real historical candles — simulation, not prediction, no execution.")
+async def tool_backtest_strategy(
+    symbol: str = "BTC/USDT",
+    strategy: str = "sma_cross",
+    fast: int = 10,
+    slow: int = 30,
+    initial_usd: float = 10000,
+    timeframe: str = "1d",
+    limit: int = 365,
+) -> str:
+    return await _safe(
+        backtest_strategy(
+            symbol=symbol, strategy=strategy, fast=fast, slow=slow,
+            initial_usd=initial_usd, timeframe=timeframe, limit=limit,
+        )
     )
 
 

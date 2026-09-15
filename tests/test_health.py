@@ -54,12 +54,12 @@ def test_ready_when_provider_down(client, monkeypatch):
     assert response.json()["status"] == "not_ready"
 
 
-def test_capabilities_lists_14_tools(client, monkeypatch):
+def test_capabilities_lists_all_tools(client, monkeypatch):
     async def _fake_health():
         return {"market": {"provider": "ccxt", "status": "ok"}}
 
     monkeypatch.setattr(api_server, "_collect_provider_health", _fake_health)
     body = client.get("/capabilities").json()
-    assert body["tool_count"] == 14
+    assert body["tool_count"] == 16
     names = {tool["name"] for tool in body["tools"]}
     assert {"get_price", "gas_tracker", "track_whale", "portfolio_health"} <= names

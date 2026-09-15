@@ -12,6 +12,7 @@ EXPECTED_TOOLS = {
     "analyze_token", "portfolio_health",
     "gas_tracker", "estimate_tx_cost",
     "track_whale", "whale_alerts",
+    "portfolio_doctor", "backtest_strategy",
 }
 
 

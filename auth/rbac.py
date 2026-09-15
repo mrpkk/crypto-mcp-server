@@ -37,6 +37,9 @@ TOOL_TO_PERMISSION: dict[str, ToolPermission] = {
     "estimate_tx_cost": ToolPermission.READ_ONCHAIN,
     "track_whale": ToolPermission.READ_ONCHAIN,
     "whale_alerts": ToolPermission.READ_ONCHAIN,
+    # intelligence (pro tier): portfolio doctor + backtesting
+    "portfolio_doctor": ToolPermission.READ_INTELLIGENCE,
+    "backtest_strategy": ToolPermission.READ_INTELLIGENCE,
 }
 
 TIER_PERMISSIONS: dict[str, set[ToolPermission]] = {
