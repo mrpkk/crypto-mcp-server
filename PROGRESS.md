@@ -5,7 +5,7 @@
 > Статус-легенда: `[ ]` todo · `[~]` in progress · `[x]` done (hash) · `[!]` blocked (причина).
 
 ## Текущий фокус
-S6 — Design & Web (следующий шаг: 26 DESIGN_SYSTEM.md + токены)
+S7 — Features (следующий шаг: 31 watchlists)
 
 ---
 
@@ -58,11 +58,11 @@ S6 — Design & Web (следующий шаг: 26 DESIGN_SYSTEM.md + токен
 - [x] 25. Тесты: test_llm_structured.py (15 тестов) (145aa0c)
 
 ## S6 — DESIGN & WEB (W7–8, P1)
-- [ ] 26. `DESIGN_SYSTEM.md` + токены (TypeScript/CSS) — quiet confidence
-- [ ] 27. Компоненты (Button/Input/Card/Modal/Toast/Table/Chart/Sparkline/Heatmap/Badge/Skeleton/Tooltip/Tabs)
-- [ ] 28. Dashboard «Market Pulse» (COMMAND CENTER + data-quality бейджи LIVE/CACHED/STALE/DEGRADED/UNAVAILABLE)
-- [ ] 29. Onboarding: Connect MCP / Explore Live Data + Demo Mode (бейдж DEMO)
-- [ ] 30. `docs/USER_FLOWS.md` — 10 флоу (START/GOAL/STEPS/RESPONSE/FAILURE/SUCCESS)
+- [x] 26. `DESIGN_SYSTEM.md` (889e65f) + токены (TypeScript/CSS) — quiet confidence
+- [x] 27. Компоненты (889e65f: web/styles.css — все состояния) (Button/Input/Card/Modal/Toast/Table/Chart/Sparkline/Heatmap/Badge/Skeleton/Tooltip/Tabs)
+- [x] 28. Dashboard «Market Pulse» (889e65f: web/index.html + app.js, бейджи LIVE/CACHED/STALE/DEGRADED/UNAVAILABLE) (COMMAND CENTER + data-quality бейджи LIVE/CACHED/STALE/DEGRADED/UNAVAILABLE)
+- [x] 29. Onboarding: Explore Live Data + DEMO-бейдж (889e65f) / Explore Live Data + Demo Mode (бейдж DEMO)
+- [x] 30. `docs/USER_FLOWS.md` (889e65f: 10 флоу) — 10 флоу (START/GOAL/STEPS/RESPONSE/FAILURE/SUCCESS)
 
 ## S7 — FEATURES (W9–10, P1)
 - [ ] 31. Watchlists (assets/wallets) + persistence (SQLite — заявленную реализовать)
@@ -99,3 +99,4 @@ S6 — Design & Web (следующий шаг: 26 DESIGN_SYSTEM.md + токен
 | 14-15 | 2026-09-15 | RBAC + SQLite API-ключи (cms_, SHA-256, метеринг) + REST-интеграция | 0a54053 + 6088c28 | 98→106 passed | 401/ревокация работают |
 | 16-18 | 2026-09-15 | Observability (JSON-логи, /metrics, X-Request-ID) + SECURITY.md (T1–T8) + дисклеймер | 6088c28 | 106 passed | S4 закрыт |
 | 19-25 | 2026-09-15 | LLM-цепочка (breaker) + structured outputs + контракты/бенчмарк/MCP-стратегия | 145aa0c | 121 passed + live GigaChat | S5 закрыт: sentiment bullish 60 |
+| 26-30 | 2026-09-15 | Market Pulse дашборд (static web/), дизайн-система, онбординг+DEMO, user flows; legacy HTML удалён (−214 строк) | 889e65f | 126 passed + live smoke | S6 закрыт |
