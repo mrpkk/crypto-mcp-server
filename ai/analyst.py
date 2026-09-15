@@ -1,155 +1,104 @@
-import logging
-import os
-import time
-from datetime import datetime, timezone
+"""CryptoAnalyst — structured AI interpretation over real inputs.
+
+Pipeline: REAL DATA (provided by callers/tools) → deterministic formatting →
+LLM interpretation → Pydantic validation → canonical envelope.
+The LLM is never a data source; unavailable AI yields an honest error contract.
+"""
+from __future__ import annotations
+
 from typing import Any
 
-import httpx
+from ai.llm import LLMClient, LLMUnavailable
+from ai.schemas import SentimentResult, TradingSignalResult, YieldAssessmentResult
+from providers.base import make_envelope, make_error
 
-logger = logging.getLogger(__name__)
-
-try:
-    from dotenv import load_dotenv
-
-    load_dotenv(os.path.expanduser("~/.env"), override=True)
-except Exception as exc:
-    logger.debug("dotenv not available: %s", exc)
-
-PROVIDERS = [
-    {"name": "GigaChat", "url": "https://gigachat.devices.sberbank.ru/api/v1/chat/completions",
-     "model": "GigaChat-Max", "giga": True,
-     "oauth_url": "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
-     "scope": os.getenv("GIGACHAT_SCOPE", "GIGACHAT_API_PERS"),
-     "auth_key": os.getenv("GIGACHAT_AUTH_KEY", "")},
-    {"name": "GitHub Models", "url": "https://models.inference.ai.azure.com/chat/completions", "model": "gpt-4o"},
-    {"name": "GitHub Models Mini", "url": "https://models.inference.ai.azure.com/chat/completions", "model": "gpt-4o-mini"},
-    {"name": "GitHub Llama", "url": "https://models.inference.ai.azure.com/chat/completions", "model": "Meta-Llama-3.1-405B-Instruct"},
-]
-
-_giga_token_cache = {"token": None, "expires_at": 0}
-
-
-async def _giga_access_token() -> str | None:
-    giga = PROVIDERS[0]
-    if not giga["auth_key"]:
-        return None
-    now = time.time()
-    if _giga_token_cache["token"] and _giga_token_cache["expires_at"] > now + 60:
-        return _giga_token_cache["token"]
-    try:
-        async with httpx.AsyncClient(timeout=15, verify=False) as client:
-            resp = await client.post(
-                giga["oauth_url"],
-                data={"scope": giga["scope"]},
-                headers={
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "Accept": "application/json",
-                    "RqUID": "6f0b1291-c7f3-43c6-bb2e-9f3efb2dc98e",
-                    "Authorization": f"Basic {giga['auth_key']}",
-                },
-            )
-        if resp.status_code >= 400:
-            return None
-        data = resp.json()
-        token = data.get("access_token")
-        expires_in = data.get("expires_in", 1800)
-        if token:
-            _giga_token_cache["token"] = token
-            _giga_token_cache["expires_at"] = now + expires_in - 60
-            return token
-    except Exception:
-        return None
-    return None
+SENTIMENT_SYSTEM = (
+    "You are a crypto market analyst. You interpret market data; you NEVER invent numbers. "
+    "Use only the numbers provided. Be concise and objective."
+)
+YIELD_SYSTEM = (
+    "You are a DeFi yield analyst. You assess risk/reward from the provided numbers only. "
+    "Never invent APY, TVL or protocol facts."
+)
+SIGNAL_SYSTEM = (
+    "You are a crypto trading analyst. Generate a concise signal from the provided indicators only. "
+    "You are not a financial advisor; reasoning must reference only the given values."
+)
 
 
 class CryptoAnalyst:
-    def __init__(self, api_key: str = ""):
-        self.api_key = api_key
-        self.fallback_key = ""
+    def __init__(self, api_key: str = "", fallback_key: str = ""):
+        self.llm = LLMClient(api_key=api_key, fallback_key=fallback_key)
+
+    # -- compatibility properties (used by api_server/mcp_server) --
+    @property
+    def api_key(self) -> str:
+        return self.llm.api_key
+
+    @api_key.setter
+    def api_key(self, value: str) -> None:
+        self.llm.api_key = value
 
     @property
-    def _active_key(self) -> str:
-        return self.api_key or self.fallback_key
+    def fallback_key(self) -> str:
+        return self.llm.fallback_key
 
-    async def analyze(self, system: str, prompt: str) -> str:
-        key = self._active_key
-        if not key and not PROVIDERS[0]["auth_key"]:
-            return self._fallback_analysis(prompt)
+    @fallback_key.setter
+    def fallback_key(self, value: str) -> None:
+        self.llm.fallback_key = value
 
-        errors = []
-        for provider in PROVIDERS:
-            if provider.get("giga"):
-                if not provider["auth_key"]:
-                    continue
-                access_token = await _giga_access_token()
-                if not access_token:
-                    errors.append("GigaChat: no access token")
-                    continue
-                auth_header = f"Bearer {access_token}"
-                verify_ssl = False
-            else:
-                auth_header = f"Bearer {key}"
-                verify_ssl = True
-            try:
-                async with httpx.AsyncClient(timeout=30, verify=verify_ssl) as client:
-                    resp = await client.post(
-                        provider["url"],
-                        headers={"Authorization": auth_header, "Content-Type": "application/json"},
-                        json={
-                            "model": provider["model"],
-                            "messages": [
-                                {"role": "system", "content": system},
-                                {"role": "user", "content": prompt},
-                            ],
-                            "max_tokens": 2000,
-                            "temperature": 0.3,
-                        },
-                    )
-                    if resp.status_code != 200:
-                        errors.append(f"{provider['name']}: {resp.status_code}")
-                        continue
-                    data = resp.json()
-                    return data["choices"][0]["message"]["content"]
-            except Exception as e:
-                errors.append(f"{provider['name']}: {e}")
-                continue
-
-        return self._fallback_analysis(prompt, errors)
-
-    def _fallback_analysis(self, prompt: str, errors: list[str] | None = None) -> str:
-        err_msg = f" ({'; '.join(errors[:2])})" if errors else ""
-        return f"AI analysis unavailable{err_msg}.\nRequested: {prompt[:100]}..."
+    async def _structured(self, system: str, user: str, schema: Any) -> dict[str, Any]:
+        try:
+            result = await self.llm.complete_structured(system, user, schema)
+        except LLMUnavailable as exc:
+            return make_error(
+                "AI_UNAVAILABLE",
+                str(exc),
+                "Retry shortly — deterministic tools keep working without AI",
+                retryable=True,
+            )
+        parsed = result["parsed"]
+        return make_envelope(
+            parsed.model_dump(),
+            source=f"llm:{result['provider']} ({result['model']})",
+            warnings=["AI interpretation, not financial advice"],
+        )
 
     async def market_sentiment(self, symbol: str, price_change_24h: float, volume_usd: float) -> dict[str, Any]:
-        system = "You are a crypto market analyst. Analyze market data and provide concise sentiment analysis."
-        prompt = f"""Analyze {symbol}:
-- 24h price change: {price_change_24h:+.2f}%
-- 24h volume: ${volume_usd:,.0f}
-
-Provide: sentiment (bullish/bearish/neutral: 0-100), key levels, short outlook."""
-        text = await self.analyze(system, prompt)
-        return {"symbol": symbol, "analysis": text, "timestamp": datetime.now(timezone.utc).isoformat()}
+        user = (
+            f"Analyze {symbol} using ONLY these real inputs:\n"
+            f"- 24h price change: {price_change_24h:+.2f}%\n"
+            f"- 24h volume: ${volume_usd:,.0f}\n"
+            "Return sentiment, a 0-100 greed/fear score, up to 5 key factors and a short outlook."
+        )
+        return await self._structured(SENTIMENT_SYSTEM, user, SentimentResult)
 
     async def yield_assessment(self, protocol: str, apy: float, tvl: float, risk_factors: list[str]) -> dict[str, Any]:
-        system = "You are a DeFi yield analyst. Assess yield opportunities and risks."
-        prompt = f"""Assess {protocol} yield opportunity:
-- APY: {apy:.2f}%
-- TVL: ${tvl:,.0f}
-- Risks: {', '.join(risk_factors)}
+        user = (
+            f"Assess {protocol} using ONLY these real inputs:\n"
+            f"- APY: {apy:.2f}%\n"
+            f"- TVL: ${tvl:,.0f}\n"
+            f"- Known risk factors: {', '.join(risk_factors) or 'none provided'}\n"
+            "Return a 1-10 score, a recommendation, risks and reasoning."
+        )
+        return await self._structured(YIELD_SYSTEM, user, YieldAssessmentResult)
 
-Score 1-10 and provide recommendation."""
-        text = await self.analyze(system, prompt)
-        return {"protocol": protocol, "apy": apy, "assessment": text, "timestamp": datetime.now(timezone.utc).isoformat()}
+    async def trading_signal(
+        self,
+        symbol: str,
+        price: float,
+        rsi: float,
+        macd: str,
+        volume_trend: str,
+        news: list[str] | None = None,
+    ) -> dict[str, Any]:
+        user = (
+            f"Generate a signal for {symbol} using ONLY these real inputs:\n"
+            f"- Price: ${price}\n- RSI(14): {rsi}\n- MACD: {macd}\n- Volume trend: {volume_trend}\n"
+            f"- Recent news: {'; '.join((news or [])[:3]) or 'none provided'}\n"
+            "Return action (buy/sell/hold), confidence 0-100, reasoning, optional stop-loss and take-profit."
+        )
+        return await self._structured(SIGNAL_SYSTEM, user, TradingSignalResult)
 
-    async def trading_signal(self, symbol: str, price: float, rsi: float, macd: str, volume_trend: str, news: list[str]) -> dict[str, Any]:
-        system = "You are a crypto trading analyst. Generate concise trading signals based on technical analysis."
-        prompt = f"""Generate signal for {symbol}:
-- Price: ${price}
-- RSI(14): {rsi}
-- MACD: {macd}
-- Volume trend: {volume_trend}
-- Recent news: {'; '.join(news[:3])}
-
-Provide: action (buy/sell/hold), confidence (0-100), reasoning, stop-loss, take-profit."""
-        text = await self.analyze(system, prompt)
-        return {"symbol": symbol, "price": price, "signal": text, "timestamp": datetime.now(timezone.utc).isoformat()}
+    async def health(self) -> dict[str, Any]:
+        return await self.llm.health()
