@@ -5,7 +5,7 @@
 > Статус-легенда: `[ ]` todo · `[~]` in progress · `[x]` done (hash) · `[!]` blocked (причина).
 
 ## Текущий фокус
-S3 — Providers (следующий шаг: 08 providers/market.py + ExchangePool)
+S3 — Providers (следующий шаг: 09 providers/onchain.py)
 
 ---
 
@@ -34,7 +34,7 @@ S3 — Providers (следующий шаг: 08 providers/market.py + ExchangePo
 
 ## S3 — PROVIDERS (W3–4, P0)
 - [x] 07. `providers/base.py` — ABC всех провайдеров + envelope helper
-- [ ] 08. `providers/market.py` — CCXT + CoinGecko fallback; ExchangePool (singleton, lifecycle)
+- [x] 08. `providers/market.py` — CCXT + CoinGecko fallback; ExchangePool (singleton, lifecycle) (425b372)
 - [ ] 09. `providers/onchain.py` — Web3Client wrapper (health/timeout/retry/cache)
 - [ ] 10. Envelope во все 14 tools (data+meta: source/timestamp/freshness/cached/degraded/warnings)
 - [ ] 11. `/health`, `/ready`, `/version`, `/capabilities` + единый version source (v2.0.0)
@@ -90,3 +90,4 @@ S3 — Providers (следующий шаг: 08 providers/market.py + ExchangePo
 | 05 | 2026-09-15 | analysis.py: живые цены, HHI-диверсификация, честные null | 531a2e2 | 40 passed + live smoke | BTC $78167; цены 2024 удалены |
 | 06 | 2026-09-15 | Regression guard: random/моки не в прод + контракты | c8931b0 | 44 passed | S2 закрыт: 0 моков |
 | 07 | 2026-09-15 | providers/base.py: единые envelope/error + ABC | 01aa23d | 49 passed | рефактор gas/whales/analysis на base |
+| 08 | 2026-09-15 | ExchangePool + CCXTMarketProvider (price.py без churn) | 425b372 | 59 passed + live | BTC $77992, пул 1 клиент |
