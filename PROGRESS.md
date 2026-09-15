@@ -5,7 +5,7 @@
 > Статус-легенда: `[ ]` todo · `[~]` in progress · `[x]` done (hash) · `[!]` blocked (причина).
 
 ## Текущий фокус
-S7 — Features (следующий шаг: 31 watchlists)
+S8 — Launch (следующий шаг: 35 AI Portfolio Doctor)
 
 ---
 
@@ -65,10 +65,10 @@ S7 — Features (следующий шаг: 31 watchlists)
 - [x] 30. `docs/USER_FLOWS.md` (889e65f: 10 флоу) — 10 флоу (START/GOAL/STEPS/RESPONSE/FAILURE/SUCCESS)
 
 ## S7 — FEATURES (W9–10, P1)
-- [ ] 31. Watchlists (assets/wallets) + persistence (SQLite — заявленную реализовать)
-- [ ] 32. Smart alerts («unusual activity» + WHY IT MATTERS вместо «BTC +1%»)
-- [ ] 33. WebSocket/SSE стриминг цен и алертов
-- [ ] 34. Тесты: test_watchlists.py, test_alerts.py, test_streaming.py
+- [x] 31. Watchlists + persistence SQLite (01dcd16)
+- [x] 32. Smart alerts-движок (price_move/gas_below/whale_above + WHY IT MATTERS) (01dcd16)
+- [x] 33. SSE-стриминг цен (/stream/prices) + UI (01dcd16)
+- [x] 34. Тесты: 13 новых (watchlists/alerts/streaming) (01dcd16)
 
 ## S8 — LAUNCH (W11–12, P2)
 - [ ] 35. AI Portfolio Doctor v1 (diversification/concentration/rebalance; без «гарантий прибыли»)
@@ -100,3 +100,4 @@ S7 — Features (следующий шаг: 31 watchlists)
 | 16-18 | 2026-09-15 | Observability (JSON-логи, /metrics, X-Request-ID) + SECURITY.md (T1–T8) + дисклеймер | 6088c28 | 106 passed | S4 закрыт |
 | 19-25 | 2026-09-15 | LLM-цепочка (breaker) + structured outputs + контракты/бенчмарк/MCP-стратегия | 145aa0c | 121 passed + live GigaChat | S5 закрыт: sentiment bullish 60 |
 | 26-30 | 2026-09-15 | Market Pulse дашборд (static web/), дизайн-система, онбординг+DEMO, user flows; legacy HTML удалён (−214 строк) | 889e65f | 126 passed + live smoke | S6 закрыт |
+| 31-34 | 2026-09-15 | Watchlists + smart alerts (WHY IT MATTERS) + SSE-стрим + UI-панели | 01dcd16 | 139 passed + live smoke | S7 закрыт: alert сработал на gas 0.29 gwei |
