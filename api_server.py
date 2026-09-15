@@ -15,12 +15,13 @@ sys.path.insert(0, str(Path(__file__).parent))
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
 from ai.analyst import CryptoAnalyst
 from config import settings
 from providers.base import make_error
+from rate_limit import EXEMPT_PATHS, RateLimiter, client_identity, limit_for_tier, resolve_tier
 from tools.analysis import analyze_token, portfolio_health
 from tools.gas import estimate_tx_cost, gas_tracker
 from tools.price import compare_prices, get_price, get_top_crypto
@@ -76,6 +77,39 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type", "Authorization"],
 )
+
+rate_limiter = RateLimiter()
+PRO_API_KEYS = {k.strip() for k in os.getenv("PRO_API_KEYS", "").split(",") if k.strip()}
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request, call_next):
+    if request.url.path in EXEMPT_PATHS:
+        return await call_next(request)
+    api_key = request.headers.get("x-api-key")
+    identity = client_identity(dict(request.headers), request.client.host if request.client else None)
+    tier = resolve_tier(api_key, PRO_API_KEYS)
+    limit = limit_for_tier(tier)
+    decision = rate_limiter.check(identity, limit)
+    if not decision.allowed:
+        return JSONResponse(
+            make_error(
+                "RATE_LIMITED",
+                f"Rate limit exceeded ({limit} requests/hour, tier '{tier}')",
+                "Retry after the window resets or use a higher tier key",
+                retryable=True,
+            ),
+            status_code=429,
+            headers={
+                "Retry-After": str(int(decision.reset_after) + 1),
+                "X-RateLimit-Limit": str(limit),
+                "X-RateLimit-Remaining": "0",
+            },
+        )
+    response = await call_next(request)
+    response.headers["X-RateLimit-Limit"] = str(limit)
+    response.headers["X-RateLimit-Remaining"] = str(decision.remaining)
+    return response
 
 
 DASHBOARD_HTML = """<!DOCTYPE html>
