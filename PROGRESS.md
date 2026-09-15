@@ -5,7 +5,7 @@
 > Статус-легенда: `[ ]` todo · `[~]` in progress · `[x]` done (hash) · `[!]` blocked (причина).
 
 ## Текущий фокус
-S3 — Providers (следующий шаг: 12 rate limiting)
+S4 — Security (следующий шаг: 14 auth/rbac.py + API-ключи)
 
 ---
 
@@ -38,8 +38,8 @@ S3 — Providers (следующий шаг: 12 rate limiting)
 - [x] 09. `providers/onchain.py` — Web3Client wrapper (health/timeout/retry/cache) (3a7acd5)
 - [x] 10. Envelope во все 14 tools (09f9aff + d32b5df: price/yield/signal; AI-группа отдаёт dict от analyst — обернуть в S5)
 - [x] 11. `/health`, `/ready`, `/version`, `/capabilities` + единый version source (v2.0.0) (65b6866: MCP под mcp 2.0 починен!)
-- [ ] 12. Rate limiting (per-key/per-tier) + CORS-фикс (один middleware, allowlist)
-- [ ] 13. Тесты: test_providers.py, test_envelope.py, test_health.py
+- [x] 12. Rate limiting (per-key/per-tier) + CORS-фикс (один middleware, allowlist) (5190d24)
+- [x] 13. Тесты: test_providers.py, test_envelope.py, test_health.py (5190d24)
 
 ## S4 — SECURITY (W5, P1)
 - [ ] 14. RBAC per-tool (free/pro/enterprise) + `auth/rbac.py`
@@ -95,3 +95,4 @@ S3 — Providers (следующий шаг: 12 rate limiting)
 | 10 | 2026-09-15 | Envelope price-группы + api_server: CORS-fix, POST /portfolio, честные AI-ошибки | 09f9aff | 66 passed + REST smoke | BTC $77986 живой |
 | 10c | 2026-09-15 | Envelope signal/yields; выпилены FALLBACK_YIELDS (APY-фейк) и цены 2024 в signal | d32b5df | 66 passed + live | RSI 61, MA50 $2210, DeFiLlama onre |
 | 11 | 2026-09-15 | Health/version + ФИКС MCP 2.0 (сервер не запускался!) | 65b6866 | 66 passed + MCP smoke | /capabilities: 14 tools |
+| 12-13 | 2026-09-15 | Rate limiter (429, per-key/tier) + health tests | 5190d24 | 80 passed | S3 закрыт |
