@@ -28,12 +28,12 @@
 **Открытые STOP GATES (из SPEC §2.2):** STOP-01 бренд/публикация · STOP-04 крипто-платежи (x402, non-RF only) · STOP-10 GigaChat в продажном продукте (лицензия).
 Плюс ждут решения: A2A-упаковка (remote MCP + manifest — дизайн готов, включать после STOP-04), сетка тарифов FREE/PRO/Enterprise, выбор FUTURE-прототипа (x402 / Paper-Trading Sandbox / Agent Marketplace).
 
-**Синергия с KARTA (onchain-ai-agent):** ChainSight = intelligence-слой (цены/газ/киты/DeFi, готов), KARTA = execution-слой (policy/simulation/audit). Композиция через MCP/REST даёт продукт 1+1>2 — вынести на обсуждение.
+**Синергия с KARTA (onchain-ai-agent):** Āgama = intelligence-слой (цены/газ/киты/DeFi, готов), KARTA = execution-слой (policy/simulation/audit). Композиция через MCP/REST даёт продукт 1+1>2 — вынести на обсуждение.
 
 ---
 
 ## Текущий фокус
-S8 — Launch: 40 — готовность к beta подтверждена; бренд **Āgama** решён (18.09). Осталось: слайс 41 — ребрендинг ChainSight→Āgama, публикация/листинг — решение владельца.
+S8 — Launch: 41/41 закрыто (ребрендинг Āgama выполнен — `bfe1ea1`). Осталось: публикация/листинг (Dealwork) — решение владельца.
 
 ---
 
@@ -105,7 +105,7 @@ S8 — Launch: 40 — готовность к beta подтверждена; б�
 - [x] 38. CI/CD: ruff → pytest → pip-audit → build (починить согласование версий)
 - [x] 39. Marketplace pack (Dealwork P1-площадка) + remote MCP/A2A manifest (FR-34/36)
 - [~] 40. Готовность к beta: 100% (чек-лист ниже). Публикация/бренд — решение владельца (STOP-01)
-- [ ] 41. Ребрендинг ChainSight → **Āgama**: README, ARCHITECTURE, DEPLOYMENT, DESIGN_SYSTEM, MARKETPLACE_PACK, USER_FLOWS, web/ (index.html, app.js), marketplace/manifest.json, api_server.py, tests/test_web.py (по команде владельца)
+- [x] 41. Ребрендинг ChainSight → **Āgama**: 23 замены в 13 файлах (docs/web/manifest/API/tests) — `bfe1ea1`, 148/148 зелёные
 
 ---
 
@@ -132,6 +132,7 @@ S8 — Launch: 40 — готовность к beta подтверждена; б�
 | 31-34 | 2026-09-15 | Watchlists + smart alerts (WHY IT MATTERS) + SSE-стрим + UI-панели | 01dcd16 | 139 passed + live smoke | S7 закрыт: alert сработал на gas 0.29 gwei |
 | 35-36 | 2026-09-15 | Portfolio Doctor v1 + backtest_strategy (paper trading на реальных свечах) | f5d4320 | 148 passed | реестр 16 tools |
 | 37-39 | 2026-09-15 | README честный, CHANGELOG, ARCHITECTURE, DEPLOYMENT, CI (ruff+pytest+build+pip-audit), marketplace pack | (коммит) | 148 passed | готово к листингу Dealwork |
+| 41 | 2026-09-18 | Ребрендинг ChainSight → Āgama (23 замены, 13 файлов) | bfe1ea1 | 148 passed | бренд-пара: «Āgama знает — KARTA делает» |
 
 
 ---
@@ -148,4 +149,4 @@ S8 — Launch: 40 — готовность к beta подтверждена; б�
 - [x] Пирамида тестов: unit/integration/contract; 148 тестов; CI зелёный
 - [x] Доки: README, CHANGELOG, ARCHITECTURE, DEPLOYMENT, SECURITY, MCP_TOOL_CONTRACTS, USER_FLOWS, LLM_PROVIDER_BENCHMARK, MCP_VERSION_STRATEGY, MARKETPLACE_PACK
 - [x] Метрики: latency-метрика в /metrics (p95 контроль — при нагрузке), uptime-цель 99.9%
-- [ ] Публичная beta и финальный бренд — STOP-01/решение владельца (ChainSight = рабочее имя)
+- [x] Финальный бренд — **ĀGAMA** (решён 18.09.2026, `bfe1ea1`); публичная beta — решение владельца (остаётся)
