@@ -1,4 +1,4 @@
-# PROGRESS — Crypto MCP Server v2 «ChainSight»
+# PROGRESS — Crypto MCP Server v2 «Āgama»
 
 > Правило: каждый слайс = реализация + тест + зелёный прогон + commit + push + отметка здесь (с хэшем).
 > SPEC: `~/Документы/work/projectBooks/CryptoMCPSPEC.md`. Ветка: `feature/v2-modernization`.
@@ -8,7 +8,8 @@
 
 ## 🎯 МЕГА-КОНТЕКСТ (читать первым в каждой сессии)
 
-**Проект:** Crypto MCP Server v2 — «Crypto Intelligence Infrastructure for AI Agents and Humans». Read-only по умолчанию; execution-boundary отсутствует by design (STOP-05). Рабочее имя бренда: **ChainSight** (финал — решение владельца, STOP-01).
+**Проект:** Crypto MCP Server v2 — «Crypto Intelligence Infrastructure for AI Agents and Humans». Read-only по умолчанию; execution-boundary отсутствует by design (STOP-05).
+**Бренд: ĀGAMA** (आगम — «пришедшее/дошедшее знание, авторитетное свидетельство»; в ньяе — шабда-прамана). Выбран владельцем 18.09.2026. Пара к KARTA: «Āgama знает — KARTA делает». Коллизии (проверено 18.09): openSUSE Agama (инсталлятор), AGAMA astro-библиотека, PyPI-пакет `agama` занят → имя пакета при публикации решить отдельно (кандидат `agama-mcp`), UNVERIFIED до проверки.
 **Ценность:** надёжный context layer, дающий AI-агентам проверяемые market/DeFi/on-chain данные с provenance (source/freshness/confidence) и без фейков (0 моков в prod-путях — регрессионный тест).
 
 **Ключевые договорённости с владельцем:**
@@ -32,7 +33,7 @@
 ---
 
 ## Текущий фокус
-S8 — Launch (почти закрыт: 40 — готовность к beta подтверждена, публикация за владельцем)
+S8 — Launch: 40 — готовность к beta подтверждена; бренд **Āgama** решён (18.09). Осталось: слайс 41 — ребрендинг ChainSight→Āgama, публикация/листинг — решение владельца.
 
 ---
 
@@ -104,6 +105,7 @@ S8 — Launch (почти закрыт: 40 — готовность к beta по
 - [x] 38. CI/CD: ruff → pytest → pip-audit → build (починить согласование версий)
 - [x] 39. Marketplace pack (Dealwork P1-площадка) + remote MCP/A2A manifest (FR-34/36)
 - [~] 40. Готовность к beta: 100% (чек-лист ниже). Публикация/бренд — решение владельца (STOP-01)
+- [ ] 41. Ребрендинг ChainSight → **Āgama**: README, ARCHITECTURE, DEPLOYMENT, DESIGN_SYSTEM, MARKETPLACE_PACK, USER_FLOWS, web/ (index.html, app.js), marketplace/manifest.json, api_server.py, tests/test_web.py (по команде владельца)
 
 ---
 
