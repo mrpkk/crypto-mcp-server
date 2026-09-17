@@ -4,6 +4,33 @@
 > SPEC: `~/Документы/work/projectBooks/CryptoMCPSPEC.md`. Ветка: `feature/v2-modernization`.
 > Статус-легенда: `[ ]` todo · `[~]` in progress · `[x]` done (hash) · `[!]` blocked (причина).
 
+---
+
+## 🎯 МЕГА-КОНТЕКСТ (читать первым в каждой сессии)
+
+**Проект:** Crypto MCP Server v2 — «Crypto Intelligence Infrastructure for AI Agents and Humans». Read-only по умолчанию; execution-boundary отсутствует by design (STOP-05). Рабочее имя бренда: **ChainSight** (финал — решение владельца, STOP-01).
+**Ценность:** надёжный context layer, дающий AI-агентам проверяемые market/DeFi/on-chain данные с provenance (source/freshness/confidence) и без фейков (0 моков в prod-путях — регрессионный тест).
+
+**Ключевые договорённости с владельцем:**
+1. **Правило старта:** слайс — только по прямой команде; обсуждение ≠ команда (прецедент 16.09).
+2. **Реальный data reality:** никаких random/хардкод-цен под видом live; нет данных → UNAVAILABLE/DEGRADED, не выдумка.
+3. **Бюджет:** без платных провайдеров; GigaChat — только после бенчмарка и юр-проверки лицензии (STOP-10).
+4. **Санкции РФ:** крипто-выплаты/маркетплейсы — только non-RF юрисдикция; фиат B2B — основной канал (STOP-04).
+5. **Backup/Obsidian:** вести daily notes + бэкап локальный и GDrive (в конце сессий).
+
+**Текущее состояние (18.09.2026):**
+- S1–S7 закрыты полностью; S8 (лаунч) — 39/40 закрыто, пункт 40 «готовность к beta 100%» подтверждён.
+- **148 тестов зелёные** (проверено повторно 18.09, system python3: `148 passed in 3.46s`).
+- Осталось: **публикация/финальный бренд (STOP-01)** и ответы на APPROVAL GATE (§11 SPEC): бренд A/B/C, LLM-политика, сетка монетизации, фиат-режим, площадки (Dealwork P1), GigaChat-лицензия, FUTURE-выбор, SQLite, scope.
+- Артефакты: README (честный), ARCHITECTURE, SECURITY (T1–T8), API, MCP, DEPLOYMENT, CONFIGURATION, CHANGELOG, DESIGN_SYSTEM, MCP_VERSION_STRATEGY, LLM_PROVIDER_BENCHMARK, MARKETPLACE_PACK, USER_FLOWS, PROGRESS.
+
+**Открытые STOP GATES (из SPEC §2.2):** STOP-01 бренд/публикация · STOP-04 крипто-платежи (x402, non-RF only) · STOP-10 GigaChat в продажном продукте (лицензия).
+Плюс ждут решения: A2A-упаковка (remote MCP + manifest — дизайн готов, включать после STOP-04), сетка тарифов FREE/PRO/Enterprise, выбор FUTURE-прототипа (x402 / Paper-Trading Sandbox / Agent Marketplace).
+
+**Синергия с KARTA (onchain-ai-agent):** ChainSight = intelligence-слой (цены/газ/киты/DeFi, готов), KARTA = execution-слой (policy/simulation/audit). Композиция через MCP/REST даёт продукт 1+1>2 — вынести на обсуждение.
+
+---
+
 ## Текущий фокус
 S8 — Launch (почти закрыт: 40 — готовность к beta подтверждена, публикация за владельцем)
 
