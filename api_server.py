@@ -151,7 +151,7 @@ async def rate_limit_middleware(request, call_next):
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    """ChainSight dashboard (static web/ app)."""
+    """Āgama dashboard (static web/ app)."""
     return FileResponse(WEB_DIR / "index.html")
 
 

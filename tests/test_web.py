@@ -16,7 +16,7 @@ def test_dashboard_root_served(client):
     response = client.get("/")
     assert response.status_code == 200
     body = response.text
-    assert "ChainSight" in body
+    assert "Āgama" in body
     assert "Market Pulse" in body
     assert "/static/styles.css" in body
     assert "/static/app.js" in body

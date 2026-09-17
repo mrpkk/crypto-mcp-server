@@ -1,4 +1,4 @@
-# USER FLOWS — ChainSight v2
+# USER FLOWS — Āgama v2
 
 > 10 критических путей. Формат: START · GOAL · STEPS · RESPONSE · FAILURE · SUCCESS.
 > Реализованы: 1–8, 10 (MCP/REST/Web). Flow 9 — через `meta.source` в каждом ответе.

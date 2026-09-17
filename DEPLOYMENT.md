@@ -1,4 +1,4 @@
-# DEPLOYMENT — ChainSight v2
+# DEPLOYMENT — Āgama v2
 
 ## Local (recommended)
 
@@ -40,7 +40,7 @@ python api_server.py 8006         # REST + dashboard на 127.0.0.1:8006
 
 ```ini
 [Unit]
-Description=ChainSight API
+Description=Āgama API
 After=network.target
 
 [Service]
@@ -56,6 +56,6 @@ WantedBy=multi-user.target
 ## Docker
 
 ```bash
-docker build -t chainsight .
-docker run --rm -p 8006:8006 --env-file .env chainsight
+docker build -t agama .
+docker run --rm -p 8006:8006 --env-file .env agama
 ```

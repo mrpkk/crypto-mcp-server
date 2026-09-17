@@ -1,4 +1,4 @@
-# DESIGN SYSTEM — ChainSight v2
+# DESIGN SYSTEM — Āgama v2
 
 > Философия: **quiet confidence** — precision, clarity, technical elegance.
 > Запрещено: AI-gradient стартап, неоновый cyberpunk, glassmorphism everywhere.

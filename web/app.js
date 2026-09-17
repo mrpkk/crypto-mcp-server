@@ -1,4 +1,4 @@
-/* ChainSight dashboard — vanilla JS, XSS-safe (no innerHTML for data), honest error states. */
+/* Āgama dashboard — vanilla JS, XSS-safe (no innerHTML for data), honest error states. */
 (() => {
   "use strict";
 
@@ -415,7 +415,7 @@
       const root = document.documentElement;
       const next = root.dataset.theme === "light" ? "dark" : "light";
       root.dataset.theme = next;
-      localStorage.setItem("chainsight-theme", next);
+      localStorage.setItem("agama-theme", next);
     });
     $("demo-toggle").addEventListener("click", () => {
       $("demo-badge").classList.remove("hidden");
@@ -431,7 +431,7 @@
         }
       });
     });
-    const saved = localStorage.getItem("chainsight-theme");
+    const saved = localStorage.getItem("agama-theme");
     if (saved) document.documentElement.dataset.theme = saved;
   }
 

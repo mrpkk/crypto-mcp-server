@@ -1,11 +1,11 @@
-# MARKETPLACE PACK — ChainSight v2
+# MARKETPLACE PACK — Āgama v2
 
 > Листинг-кит для A2A-площадок. Приоритет по SPEC: **Dealwork.ai (P1, USD-выплаты)**,
 > затем OKX.AI / x402 (P2, санкционные ограничения РФ), остальные — по матрице.
 
 ## Короткий оффер (EN, для листинга)
 
-**ChainSight — real crypto intelligence for AI agents.**
+**Āgama — real crypto intelligence for AI agents.**
 16 MCP tools + REST API: live prices, arbitrage, DeFi yields, gas (6 chains),
 whale tracking (Etherscan), technical analysis, paper-trading backtests and
 honest AI interpretation. Every response includes its source, timestamp and

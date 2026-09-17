@@ -1,4 +1,4 @@
-# ChainSight (Crypto MCP Server v2)
+# Āgama (Crypto MCP Server v2)
 
 **Crypto intelligence for AI agents and humans.** 16 MCP tools + REST API:
 real market data, on-chain, DeFi and honest AI interpretation — every response
@@ -29,7 +29,7 @@ python main.py              # stdio MCP server
 Claude / Cursor / VS Code:
 
 ```json
-{ "mcpServers": { "chainsight": { "command": "python", "args": ["/path/to/main.py"] } } }
+{ "mcpServers": { "agama": { "command": "python", "args": ["/path/to/main.py"] } } }
 ```
 
 ## Quick start (REST + dashboard)

@@ -1,4 +1,4 @@
-# ARCHITECTURE — ChainSight v2
+# ARCHITECTURE — Āgama v2
 
 ```
 [AI Agent] ←MCP stdio→ mcp_server.py ─┐
